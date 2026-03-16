@@ -16,7 +16,7 @@ type Order struct {
 	DeletedAt  gorm.DeletedAt `gorm:"index"`
 
 	User  User
-	Items []OrderItem
+	Items []OrderItem `gorm:"foreignKey:OrderId;references:ID"`
 }
 
 type OrderItem struct {
@@ -27,6 +27,7 @@ type OrderItem struct {
 	ProductId int     `json:"productId"`
 	VariantId int     `json:"variantId"`
 
+	// Order Order 
 	Product Product
 	Variant ProductVariants
 }

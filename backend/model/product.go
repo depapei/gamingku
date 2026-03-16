@@ -25,6 +25,7 @@ type Product struct {
 	ID            uint           `gorm:"primaryKey" json:"id"`
 	Name          string         `json:"name"`
 	Slug          string         `json:"slug"`
+	Price         float64        `json:"price"`
 	DiscountPrice float64        `json:"discountPrice"`
 	Stock         float64        `json:"stock"`
 	CategoryId    int            `json:"categoryId"`
@@ -35,7 +36,7 @@ type Product struct {
 	CreatedAt     time.Time      `json:"createdAt"`
 	UpdatedAt     time.Time      `json:"updatedAt"`
 	DeletedAt     gorm.DeletedAt `gorm:"index" json:"deletedAt"`
-	CreatedById   int            `json:"createdBy"`
+	CreatedById int              `gorm:"column:created_by" json:"createdBy"`
 
 	CreatedBy      User
 	Variants       []ProductVariants
@@ -49,7 +50,7 @@ type ProductVariants struct {
 	CreatedAt   time.Time      `json:"createdAt"`
 	UpdatedAt   time.Time      `json:"updatedAt"`
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
-	CreatedById int            `json:"createdBy"`
+	CreatedById int            `gorm:"column:created_by" json:"createdBy"`
 
 	CreatedBy User
 	Options   []VariantOptions `gorm:"foreignKey:ID;refrences:VariantId"`
