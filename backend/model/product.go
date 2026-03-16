@@ -29,6 +29,7 @@ type Product struct {
 	DiscountPrice float64        `json:"discountPrice"`
 	Stock         float64        `json:"stock"`
 	CategoryId    int            `json:"categoryId"`
+	Images        []string       `gorm:"type:text[]" json:"images"`
 	Rating        int8           `json:"rating"`
 	ReviewCount   int64          `json:"reviewCount"`
 	Description   string         `json:"description"`
@@ -36,7 +37,7 @@ type Product struct {
 	CreatedAt     time.Time      `json:"createdAt"`
 	UpdatedAt     time.Time      `json:"updatedAt"`
 	DeletedAt     gorm.DeletedAt `gorm:"index" json:"deletedAt"`
-	CreatedById int              `gorm:"column:created_by" json:"createdBy"`
+	CreatedById   int            `gorm:"column:created_by" json:"createdBy"`
 
 	CreatedBy      User
 	Variants       []ProductVariants
