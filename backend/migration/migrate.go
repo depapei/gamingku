@@ -13,6 +13,7 @@ func Migrate(db *gorm.DB) {
 		&model.SpecificationKeys{},
 		&model.ProductSpecifications{},
 		&model.ProductVariants{},
+		&model.VariantOptions{},
 		&model.Product{},
 		&model.Order{},
 		&model.OrderItem{},
