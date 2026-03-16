@@ -1,8 +1,11 @@
 package main
 
 import (
+	PubCategoryController "backend/controllers/public/category"
+	PubProductController "backend/controllers/public/product"
 	DataAccess "backend/db"
-	Migration "backend/migration"
+
+	// Seeder "backend/seeder"
 	"log"
 
 	"github.com/gin-gonic/gin"
@@ -11,13 +14,28 @@ import (
 
 func main() {
 
-	err := godotenv.Load(); if err != nil {
+	err := godotenv.Load()
+	if err != nil {
 		log.Fatal("failed to load .env files")
 	}
 
 	DataAccess.Connect()
-	Migration.Migrate(DataAccess.DB)
+	// Migration.Migrate(DataAccess.DB)
+	// Seeder.Stack();
+
 	r := gin.Default()
 
-	r.Run();
+	public := r.Group("/")
+	{
+		product := public.Group("/product")
+		{
+			product.GET("/", PubProductController.GetProducts)
+		}
+		category := public.Group("/category")
+		{
+			category.GET("/", PubCategoryController.GetCategories)
+		}
+	}
+
+	r.Run()
 }
