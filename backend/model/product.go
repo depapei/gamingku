@@ -29,7 +29,7 @@ type Product struct {
 	DiscountPrice float64        `json:"discountPrice"`
 	Stock         float64        `json:"stock"`
 	CategoryId    int            `json:"categoryId"`
-	Images        []string       `gorm:"type:text[]" json:"images"`
+	Images        []string       `gorm:"serializer:json" json:"images"`
 	Rating        int8           `json:"rating"`
 	ReviewCount   int64          `json:"reviewCount"`
 	Description   string         `json:"description"`
@@ -67,7 +67,7 @@ type VariantOptions struct {
 	CreatedById int            `json:"createdBy"`
 
 	CreatedBy       User
-	ProductVariants ProductVariants `gorm:"foreignKey:VariantId;refrences:ID"`
+	// ProductVariants ProductVariants `gorm:"foreignKey:VariantId;refrences:ID"`
 }
 
 type ProductSpecifications struct {
