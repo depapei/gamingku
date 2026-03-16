@@ -14,20 +14,20 @@ type ResVariant struct {
 }
 
 type ResProduct struct {
-	ID             uint
-	Name           string
-	Slug           string
-	Price          float64
-	DiscountPrice  float64
-	Stock          float64
-	CategoryId     int
-	Images         pq.StringArray
-	Rating         int
-	ReviewCount    int
-	Description    string
-	Variants       []ResVariant
-	Featured       bool
-	Specifications map[string]string
+	ID             uint `json:"id"`
+	Name           string `json:"name"`
+	Slug           string `json:"slug"`
+	Price          float64 `json:"price"`
+	DiscountPrice  float64 `json:"discountPrice"`
+	Stock          float64 `json:"stock"`
+	CategoryId     int `json:"categoryId"`
+	Images         pq.StringArray `json:"images"`
+	Rating         int `json:"rating"`
+	ReviewCount    int `json:"reviewCount"`
+	Description    string `json:"description"`
+	Variants       []ResVariant `json:"variants"`
+	Featured       bool `json:"featured"`
+	Specifications map[string]string `json:"specifications"`
 }
 
 func GetProducts() ([]ResProduct, error){
