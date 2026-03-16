@@ -4,6 +4,7 @@ import (
 	PubCategoryController "backend/controllers/public/category"
 	PubProductController "backend/controllers/public/product"
 	DataAccess "backend/db"
+	"backend/helper"
 
 	// Seeder "backend/seeder"
 	"log"
@@ -24,6 +25,7 @@ func main() {
 	// Seeder.Stack();
 
 	r := gin.Default()
+	r.Use(helper.Cors())
 
 	public := r.Group("/")
 	{
