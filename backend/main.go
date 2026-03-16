@@ -32,6 +32,7 @@ func main() {
 		product := public.Group("/product")
 		{
 			product.GET("/", PubProductController.GetProducts)
+			product.GET("/:slug", PubProductController.GetDetail)
 		}
 		category := public.Group("/category")
 		{
