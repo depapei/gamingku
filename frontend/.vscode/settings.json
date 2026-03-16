@@ -1,0 +1,6 @@
+{
+  "tailwindCSS.lint.suggestCanonicalClasses": "warning",
+  "editor.codeActionsOnSave": {
+    "source.fixAll.tailwind": "explicit"
+  }
+}

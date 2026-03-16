@@ -1,0 +1,36 @@
+package DataAccess
+
+import (
+	"fmt"
+	"log"
+	"os"
+	"time"
+
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+)
+
+var DB *gorm.DB
+
+func Connect() {
+	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s timezone=%s", os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_NAME"), os.Getenv("DB_SSLMODE"), os.Getenv("DB_TIMEZONE"))
+
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		TranslateError: true,
+	})
+	if err != nil {
+		log.Fatal("Failed to connecting database: ", err)
+	}
+
+	pgDb, err := db.DB()
+	if err != nil {
+		log.Fatal("Failed to get database instance: ", err)
+	}
+
+	pgDb.SetMaxOpenConns(25)
+	pgDb.SetMaxIdleConns(10)
+	pgDb.SetConnMaxLifetime(time.Hour)
+
+	DB = db.Debug()
+	// DB = db
+}
