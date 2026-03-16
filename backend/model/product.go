@@ -3,6 +3,7 @@ package model
 import (
 	"time"
 
+	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
@@ -29,14 +30,14 @@ type Product struct {
 	DiscountPrice float64        `json:"discountPrice"`
 	Stock         float64        `json:"stock"`
 	CategoryId    int            `json:"categoryId"`
-	Images        []string       `gorm:"serializer:json" json:"images"`
+	Images        pq.StringArray `gorm:"serializer:json" json:"images"`
 	Rating        int8           `json:"rating"`
 	ReviewCount   int64          `json:"reviewCount"`
 	Description   string         `json:"description"`
 	Featured      bool           `json:"featured"`
 	CreatedAt     time.Time      `json:"createdAt"`
 	UpdatedAt     time.Time      `json:"updatedAt"`
-	DeletedAt     gorm.DeletedAt `gorm:"index" json:"deletedAt"`
+	DeletedAt     *gorm.DeletedAt `gorm:"index" json:"-"`
 	CreatedById   int            `gorm:"column:created_by" json:"createdBy"`
 
 	CreatedBy      User
