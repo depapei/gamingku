@@ -3,6 +3,7 @@ package model
 import (
 	"time"
 
+	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
@@ -25,9 +26,9 @@ type OrderItem struct {
 	Quantity  float64 `json:"quantity"`
 	Price     float64 `json:"price"`
 	ProductId int     `json:"productId"`
-	VariantId int     `json:"variantId"`
+	VariantId pq.Int64Array `gorm:"serializer:json" json:"variantId"`
 
 	// Order Order 
 	Product Product
-	Variant ProductVariants
+	// Variant []ProductVariants
 }
