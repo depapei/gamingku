@@ -67,19 +67,12 @@ func GetProducts(category string, search string, sortBy string, sortType string)
 		switch sortBy {
 		case "arrival":
 			raw = raw.Order("created_at ASC")
-		}
-
-		asc := sortBy + " ASC"
-		desc := sortBy + " DESC"
-		switch sortType {
-		case "desc":
-			raw = raw.Order(asc)
-		case "asc": 
-			raw = raw.Order(desc)
 		default:
-			raw = raw.Order("name ASC")
-		}
-			
+			sortByPattern := sortBy + " " + sort
+			raw = raw.Order(sortByPattern)
+		}		
+	} else {
+		raw = raw.Order("name ASC")
 	}
 
 	raw.Find(&products)
