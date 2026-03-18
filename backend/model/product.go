@@ -41,6 +41,7 @@ type Product struct {
 	CreatedById   int            `gorm:"column:created_by" json:"createdBy"`
 
 	CreatedBy      User
+	Category       Category
 	Variants       []ProductVariants
 	Specifications []ProductSpecifications
 }
