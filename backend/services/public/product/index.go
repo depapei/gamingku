@@ -3,6 +3,7 @@ package PubProductService
 import (
 	DataAccess "backend/db"
 	"backend/model"
+	"strconv"
 
 	"github.com/lib/pq"
 )
@@ -30,40 +31,65 @@ type ResProduct struct {
 	Specifications map[string]string `json:"specifications"`
 }
 
-func GetProducts() ([]ResProduct, error){
+type ResIndexProduct struct {
+	ID             uint `json:"id"`
+	Name           string `json:"name"`
+	Slug           string `json:"slug"`
+	Price          float64 `json:"price"`
+	DiscountPrice  float64 `json:"discountPrice"`
+	Stock          float64 `json:"stock"`
+	CategoryId     int `json:"categoryId"`
+	Featured       bool `json:"featured"`
+	Images         pq.StringArray `json:"images"`
+}
+
+func GetProducts(category string, search string, sortBy string, sortType string) ([]ResIndexProduct, error){
 	var products []model.Product
-	raw := DataAccess.DB.
-		Preload("Specifications").
-		Preload("Variants").
-		Find(&products)
+	raw := DataAccess.DB
+	
+	if len(category) > 0 {
+		var cats []model.Category
+		raw.Where("parent_id = ?", category).Find(&cats)
+		var all_ids []string
+		all_ids = append(all_ids, category)
+		for _, cat := range cats{
+			all_ids = append(all_ids, strconv.Itoa(int(cat.ID)))
+		}
+		raw = raw.Where("category_id IN ?", all_ids)
+	}
+
+	if len(search) > 0 {
+		searchPattern := "%" + search + "%"
+		raw = raw.Where("LOWER(name) LIKE LOWER(?)", searchPattern)
+	}
+
+	if len(sortBy) > 1 {
+		switch sortBy {
+		case "arrival":
+			raw = raw.Order("created_at ASC")
+		}
+
+		asc := sortBy + " ASC"
+		desc := sortBy + " DESC"
+		switch sortType {
+		case "desc":
+			raw = raw.Order(asc)
+		case "asc": 
+			raw = raw.Order(desc)
+		default:
+			raw = raw.Order("name ASC")
+		}
+			
+	}
+
+	raw.Find(&products)
 
 	err := raw.Error
 
-	var response []ResProduct
+	// mapping response
+	var response []ResIndexProduct
 	for _, product := range products{
-		
-		specifications := make(map[string]string)
-		for _, spec := range product.Specifications{
-			specifications[spec.Key] = spec.Name
-		}
-
-		var variants []ResVariant
-		for _, variant := range product.Variants{
-
-			var options []string
-
-			for _, option := range variant.Options{
-				options = append(options, option.Name)
-			}
-
-			variants = append(variants, ResVariant{
-				ID: variant.ID,
-				Name: variant.Name,
-				Options: options,
-			})
-		}
-
-		response = append(response, ResProduct{
+		response = append(response, ResIndexProduct{
 			ID: product.ID,
 			Name: product.Name,
 			Slug: product.Slug,
@@ -71,13 +97,8 @@ func GetProducts() ([]ResProduct, error){
 			DiscountPrice: product.DiscountPrice,
 			Stock: product.Stock,
 			Images: product.Images,
-			Rating: int(product.Rating),
 			CategoryId: product.CategoryId,
-			ReviewCount: int(product.ReviewCount),
-			Description: product.Description,
 			Featured: product.Featured,
-			Variants: variants,
-			Specifications: specifications,
 		})
 	}
 
