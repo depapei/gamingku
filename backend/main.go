@@ -1,10 +1,12 @@
 package main
 
 import (
+	AdminCategoryController "backend/controllers/admin/category"
 	PubCategoryController "backend/controllers/public/category"
 	PubProductController "backend/controllers/public/product"
 	DataAccess "backend/db"
 	"backend/helper"
+	Migration "backend/migration"
 
 	// Seeder "backend/seeder"
 	"log"
@@ -21,7 +23,7 @@ func main() {
 	}
 
 	DataAccess.Connect()
-	// Migration.Migrate(DataAccess.DB)
+	Migration.Migrate(DataAccess.DB)
 	// Seeder.Stack();
 
 	r := gin.Default()
@@ -29,14 +31,28 @@ func main() {
 
 	public := r.Group("/")
 	{
+		category := public.Group("/category")
+		{
+			category.GET("/", PubCategoryController.GetCategories)
+		}
 		product := public.Group("/product")
 		{
 			product.GET("/", PubProductController.GetProducts)
 			product.GET("/:slug", PubProductController.GetDetail)
 		}
-		category := public.Group("/category")
+	}
+
+	admin := r.Group("/admin")
+	{
+		// product := public.Group("/product")
+		// {
+		// 	product.GET("/", PubProductController.GetProducts)
+		// 	product.GET("/:slug", PubProductController.GetDetail)
+		// }
+		category := admin.Group("/category")
 		{
-			category.GET("/", PubCategoryController.GetCategories)
+			category.GET("/", AdminCategoryController.GetCategories)
+			category.GET("/:id", AdminCategoryController.GetDetail)
 		}
 	}
 
