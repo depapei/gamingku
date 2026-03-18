@@ -1,6 +1,7 @@
 package PubProductController
 
 import (
+	"backend/helper"
 	PubProductService "backend/services/public/product"
 	"net/http"
 
@@ -8,14 +9,20 @@ import (
 )
 
 func GetProducts(c *gin.Context) {
+	category := c.DefaultQuery("category", "")
+	search := c.DefaultQuery("search", "")
+	sortBy := c.DefaultQuery("sortBy", "")
+	sortType := c.DefaultQuery("sortType", "")
 
-	response, err := PubProductService.GetProducts()
+	response, err := PubProductService.GetProducts(category, search, sortBy, sortType)
 
 	if err != nil {
+		message := helper.ParseError(err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
-			"message": "Internal server error",
+			"message": message,
 		})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
