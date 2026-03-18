@@ -33,7 +33,7 @@ func (s *ProductVariantsSeeder) Seed(db *gorm.DB) error {
 		}
 
         product := model.ProductVariants{
-            Name: fmt.Sprintf("Color #%d", n),
+            Name: fmt.Sprintf("Variant #%d", n),
 			ProductId: i + 1,
 			CreatedById: 1,
         }
