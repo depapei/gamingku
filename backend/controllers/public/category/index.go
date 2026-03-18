@@ -1,6 +1,7 @@
 package PubCategoryController
 
 import (
+	"backend/helper"
 	PubCategoryService "backend/services/public/category"
 	"net/http"
 
@@ -11,8 +12,10 @@ func GetCategories(c *gin.Context) {
 	
 	result, err := PubCategoryService.GetCategories()
 	if err != nil {
+		message := helper.ParseError(err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
+			"message": message,
 		})
 		return
 	}
