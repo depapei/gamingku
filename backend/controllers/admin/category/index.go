@@ -11,9 +11,9 @@ import (
 func GetCategories(c *gin.Context){
 	search := c.DefaultQuery("search", "")
 	sortBy := c.DefaultQuery("sortBy", "")
-	sortType := c.DefaultQuery("sortType", "")
+	sort := c.DefaultQuery("sort", "")
 
-	response, err := AdminCategoryService.GetCategories(search, sortBy, sortType)
+	response, err := AdminCategoryService.GetCategories(search, sortBy, sort)
 
 	if err != nil {
 		message := helper.ParseError(err)

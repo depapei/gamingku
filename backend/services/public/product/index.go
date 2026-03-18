@@ -43,7 +43,7 @@ type ResIndexProduct struct {
 	Images         pq.StringArray `json:"images"`
 }
 
-func GetProducts(category string, search string, sortBy string, sortType string) ([]ResIndexProduct, error){
+func GetProducts(category string, search string, sortBy string, sort string) ([]ResIndexProduct, error){
 	var products []model.Product
 	raw := DataAccess.DB
 	
@@ -63,7 +63,7 @@ func GetProducts(category string, search string, sortBy string, sortType string)
 		raw = raw.Where("LOWER(name) LIKE LOWER(?)", searchPattern)
 	}
 
-	if len(sortBy) > 1 {
+	if len(sortBy) > 0 && len(sort) > 0 {
 		switch sortBy {
 		case "arrival":
 			raw = raw.Order("created_at ASC")

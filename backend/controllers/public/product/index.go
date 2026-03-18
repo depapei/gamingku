@@ -12,9 +12,9 @@ func GetProducts(c *gin.Context) {
 	category := c.DefaultQuery("category", "")
 	search := c.DefaultQuery("search", "")
 	sortBy := c.DefaultQuery("sortBy", "")
-	sortType := c.DefaultQuery("sortType", "")
+	sort := c.DefaultQuery("sort", "")
 
-	response, err := PubProductService.GetProducts(category, search, sortBy, sortType)
+	response, err := PubProductService.GetProducts(category, search, sortBy, sort)
 
 	if err != nil {
 		message := helper.ParseError(err)

@@ -19,7 +19,7 @@ type CategoryChild struct {
 	Image string `json:"image"`
 }
 
-func GetCategories(search string, sortBy string, sortType string) ([]ResCategory, error) {
+func GetCategories(search string, sortBy string, sort string) ([]ResCategory, error) {
 
 	var categories []model.Category
 
@@ -31,7 +31,7 @@ func GetCategories(search string, sortBy string, sortType string) ([]ResCategory
 	}
 
 	if len(sortBy) > 0 {
-		sortByPattern := sortBy + " " + sortType
+		sortByPattern := sortBy + " " + sort
 		raw = raw.Order(sortByPattern)
 	}
 
