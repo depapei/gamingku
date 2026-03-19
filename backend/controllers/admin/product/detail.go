@@ -2,20 +2,16 @@ package AdminProductController
 
 import (
 	"backend/helper"
-	AdminProduct "backend/services/admin/product"
+	AdminProductService "backend/services/admin/product"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-func GetProducts(c *gin.Context) {
-	category := c.DefaultQuery("category", "")
-	search := c.DefaultQuery("search", "")
-	sortBy := c.DefaultQuery("sortBy", "")
-	sort := c.DefaultQuery("sort", "")
+func GetDetail(c *gin.Context) {
+	slug := c.Param("slug")
 
-	response, err := AdminProduct.GetProducts(category, search, sortBy, sort)
-
+	response, err := AdminProductService.GetDetail(slug)
 	if err != nil {
 		message := helper.ParseError(err)
 		c.JSON(http.StatusInternalServerError, gin.H{
