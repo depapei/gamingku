@@ -87,7 +87,7 @@ func CreateProduct(input Product.ResProduct) error {
 				VariantId:   int(variantID),
 				Name:        nOpt.Name,
 				IsAvailable: nOpt.IsAvailable,
-				CreatedById: input.CreatedById,
+				CreatedById: *input.CreatedById,
 			})
 		}
 	}
