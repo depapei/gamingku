@@ -30,7 +30,7 @@ func CreateProduct(input Product.ResProduct) error {
 		Images:        input.Images,
 		Description:   input.Description,
 		Featured:      *input.Featured,
-		CreatedById:   input.CreatedById,
+		CreatedById:   *input.CreatedById,
 	}
 
 	tx := DataAccess.DB.Begin()
@@ -54,7 +54,7 @@ func CreateProduct(input Product.ResProduct) error {
 			Variant: model.ProductVariants{
 				ProductId:   int(nProduct.ID),
 				Name:        variant.Name,
-				CreatedById: input.CreatedById,
+				CreatedById: *input.CreatedById,
 			},
 		}
 
@@ -62,7 +62,7 @@ func CreateProduct(input Product.ResProduct) error {
 			tv.Options = append(tv.Options, model.VariantOptions{
 				Name:        opt.Name,
 				IsAvailable: opt.IsAvailable,
-				CreatedById: input.CreatedById,
+				CreatedById: *input.CreatedById,
 			})
 		}
 
@@ -104,7 +104,7 @@ func CreateProduct(input Product.ResProduct) error {
 			ProductId:   int(nProduct.ID),
 			Key:         spec.Key,
 			Name:        spec.Name,
-			CreatedById: input.CreatedById,
+			CreatedById: *input.CreatedById,
 		})
 	}
 
