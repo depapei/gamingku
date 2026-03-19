@@ -23,22 +23,22 @@ type Category struct {
 }
 
 type Product struct {
-	ID            uint           `gorm:"primaryKey" json:"id"`
-	Name          string         `json:"name"`
-	Slug          string         `json:"slug"`
-	Price         float64        `json:"price"`
-	DiscountPrice float64        `json:"discountPrice"`
-	Stock         float64        `json:"stock"`
-	CategoryId    int            `json:"categoryId"`
-	Images        pq.StringArray `gorm:"serializer:json" json:"images"`
-	Rating        int8           `json:"rating"`
-	ReviewCount   int64          `json:"reviewCount"`
-	Description   string         `json:"description"`
-	Featured      bool           `json:"featured"`
-	CreatedAt     time.Time      `json:"createdAt"`
-	UpdatedAt     time.Time      `json:"updatedAt"`
+	ID            uint            `gorm:"primaryKey" json:"id"`
+	Name          string          `json:"name"`
+	Slug          string          `json:"slug"`
+	Price         float64         `json:"price"`
+	DiscountPrice float64         `json:"discountPrice"`
+	Stock         float64         `json:"stock"`
+	CategoryId    int             `json:"categoryId"`
+	Images        pq.StringArray  `gorm:"serializer:json" json:"images"`
+	Rating        int8            `json:"rating"`
+	ReviewCount   int64           `json:"reviewCount"`
+	Description   string          `json:"description"`
+	Featured      bool            `json:"featured"`
+	CreatedAt     time.Time       `json:"createdAt"`
+	UpdatedAt     time.Time       `json:"updatedAt"`
 	DeletedAt     *gorm.DeletedAt `gorm:"index" json:"-"`
-	CreatedById   int            `gorm:"column:created_by" json:"createdBy"`
+	CreatedById   int             `gorm:"column:created_by" json:"createdBy"`
 
 	CreatedBy      User
 	Category       Category
@@ -63,12 +63,13 @@ type VariantOptions struct {
 	ID          uint           `gorm:"primaryKey"`
 	VariantId   int            `json:"variantId"`
 	Name        string         `json:"name"`
+	IsAvailable bool           `json:"available"`
 	CreatedAt   time.Time      `json:"createdAt"`
 	UpdatedAt   time.Time      `json:"updatedAt"`
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
 	CreatedById int            `json:"createdBy"`
 
-	CreatedBy       User
+	CreatedBy User
 	// ProductVariants ProductVariants `gorm:"foreignKey:VariantId;refrences:ID"`
 }
 
