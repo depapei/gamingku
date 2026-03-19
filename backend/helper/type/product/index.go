@@ -37,7 +37,7 @@ type ResProduct struct {
 	Variants       []ResVariant   `json:"variants" binding:"required"`
 	Featured       *bool          `json:"featured,omitempty"`
 	Specifications []ResSpec      `json:"specifications" binding:"required"`
-	CreatedById    int            `json:"createdBy" binding:"required"`
+	CreatedById    *int           `json:"createdBy,omitempty" binding:"required"`
 
 	CreatedBy user.UserInfo `json:"createdByUser"`
 }

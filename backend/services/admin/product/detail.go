@@ -3,6 +3,7 @@ package AdminProductService
 import (
 	DataAccess "backend/db"
 	Product "backend/helper/type/product"
+	"backend/helper/type/user"
 	"backend/model"
 )
 
@@ -13,6 +14,7 @@ func GetDetail(slug string) (Product.ResProduct, error) {
 		Preload("Specifications").
 		Preload("Variants").
 		Preload("Variants.Options").
+		Preload("CreatedBy").
 		First(&product, "slug = ?", slug).
 		Error
 
@@ -42,6 +44,13 @@ func GetDetail(slug string) (Product.ResProduct, error) {
 		})
 	}
 
+	userInfo := user.UserInfo{
+		Name:   product.CreatedBy.Name,
+		Email:  product.CreatedBy.Email,
+		Role:   product.CreatedBy.Role,
+		Avatar: product.CreatedBy.Avatar,
+	}
+
 	response := Product.ResProduct{
 		ID:             product.ID,
 		Name:           product.Name,
@@ -57,6 +66,7 @@ func GetDetail(slug string) (Product.ResProduct, error) {
 		Featured:       &product.Featured,
 		Variants:       variants,
 		Specifications: specifications,
+		CreatedBy:      userInfo,
 	}
 
 	return response, err
