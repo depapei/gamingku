@@ -2,6 +2,7 @@ package helper
 
 import (
 	"errors"
+	"log"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -15,6 +16,7 @@ type ErrorMessage struct {
 }
 
 func GetErrorMessage(fe validator.FieldError) string {
+	log.Println(fe.Tag())
 	switch fe.Tag() {
 	case "required":
 		return "This field is required!"
