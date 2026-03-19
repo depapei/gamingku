@@ -16,7 +16,7 @@ type Category struct {
 	CreatedAt   time.Time      `json:"createdAt"`
 	UpdatedAt   time.Time      `json:"updatedAt"`
 	DeletedAt   gorm.DeletedAt `gorm:"index" json:"deletedAt"`
-	CreatedById int            `json:"createdBy"`
+	CreatedById int            `gorm:"column:created_by" json:"createdBy"`
 
 	CreatedBy User
 	Product   []Product
@@ -56,7 +56,8 @@ type ProductVariants struct {
 	CreatedById int            `gorm:"column:created_by" json:"createdBy"`
 
 	CreatedBy User
-	Options   []VariantOptions `gorm:"foreignKey:ID;refrences:VariantId"`
+	Options   []VariantOptions `gorm:"foreignKey:VariantID;reference:ID"`
+	// Options []VariantOptions
 }
 
 type VariantOptions struct {
@@ -67,10 +68,10 @@ type VariantOptions struct {
 	CreatedAt   time.Time      `json:"createdAt"`
 	UpdatedAt   time.Time      `json:"updatedAt"`
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
-	CreatedById int            `json:"createdBy"`
+	CreatedById int            `gorm:"column:created_by" json:"createdBy"`
 
-	CreatedBy User
-	// ProductVariants ProductVariants `gorm:"foreignKey:VariantId;refrences:ID"`
+	CreatedBy       User
+	ProductVariants ProductVariants `gorm:"foreignKey:VariantId;reference:ID"`
 }
 
 type ProductSpecifications struct {
@@ -81,7 +82,7 @@ type ProductSpecifications struct {
 	CreatedAt   time.Time      `json:"createdAt"`
 	UpdatedAt   time.Time      `json:"updatedAt"`
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
-	CreatedById int            `json:"createdBy"`
+	CreatedById int            `gorm:"column:created_by" json:"createdBy"`
 
 	CreatedBy User
 	Product   Product
@@ -93,7 +94,7 @@ type SpecificationKeys struct {
 	CreatedAt   time.Time      `json:"createdAt"`
 	UpdatedAt   time.Time      `json:"updatedAt"`
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
-	CreatedById int            `json:"createdBy"`
+	CreatedById int            `gorm:"column:created_by" json:"createdBy"`
 
 	CreatedBy User
 }
