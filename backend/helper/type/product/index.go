@@ -49,7 +49,8 @@ type ResIndexProduct struct {
 	Price         float64        `json:"price"`
 	DiscountPrice float64        `json:"discountPrice"`
 	Stock         float64        `json:"stock"`
-	CategoryId    int            `json:"categoryId"`
+	CategoryId    *int           `json:"categoryId,omitempty"`
+	Category      *string        `json:"category"`
 	Featured      bool           `json:"featured"`
 	Images        pq.StringArray `json:"images"`
 }

@@ -9,7 +9,7 @@ import (
 
 func GetProducts(category string, search string, sortBy string, sort string) ([]Product.ResIndexProduct, error) {
 	var products []model.Product
-	raw := DataAccess.DB
+	raw := DataAccess.DB.Preload("Category")
 
 	if len(category) > 0 {
 		var cats []model.Category
@@ -54,7 +54,7 @@ func GetProducts(category string, search string, sortBy string, sort string) ([]
 			DiscountPrice: product.DiscountPrice,
 			Stock:         product.Stock,
 			Images:        product.Images,
-			CategoryId:    product.CategoryId,
+			Category:      &product.Category.Name,
 			Featured:      product.Featured,
 		})
 	}
