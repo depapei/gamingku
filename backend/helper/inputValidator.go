@@ -17,7 +17,11 @@ type ErrorMessage struct {
 func GetErrorMessage(fe validator.FieldError) string {
 	switch fe.Tag() {
 	case "required":
-		return "this field is required"
+		return "This field is required!"
+	case "email":
+		return "Format should be email!"
+	case "min":
+		return "Minimum value length is 3 characters!"
 	default:
 		return "Unknown error"
 	}
@@ -30,10 +34,10 @@ func Validate(err error) []ErrorMessage {
 		out := make([]ErrorMessage, len(ve))
 		for i, fe := range ve {
 			out[i] = ErrorMessage{
-				Field:  fe.Field(),
-				Object: fe.Namespace(),
-				Tag:    fe.Tag(),
-				Value:  fe.Value(),
+				Field:   fe.Field(),
+				Message: GetErrorMessage(fe),
+				Object:  fe.Namespace(),
+				Value:   fe.Value(),
 			}
 		}
 		return out
