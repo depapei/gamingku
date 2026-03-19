@@ -3,12 +3,13 @@ package main
 import (
 	AdminCategoryController "backend/controllers/admin/category"
 	PubCategoryController "backend/controllers/public/category"
+	PubOrderController "backend/controllers/public/order"
 	PubProductController "backend/controllers/public/product"
 	DataAccess "backend/db"
 	"backend/helper"
 	Migration "backend/migration"
 
-	// Seeder "backend/seeder"
+	Seeder "backend/seeder"
 	"log"
 
 	"github.com/gin-gonic/gin"
@@ -24,7 +25,7 @@ func main() {
 
 	DataAccess.Connect()
 	Migration.Migrate(DataAccess.DB)
-	// Seeder.Stack();
+	Seeder.Stack()
 
 	r := gin.Default()
 	r.Use(helper.Cors())
@@ -39,6 +40,10 @@ func main() {
 		{
 			product.GET("/", PubProductController.GetProducts)
 			product.GET("/:slug", PubProductController.GetDetail)
+		}
+		order := public.Group("/order")
+		{
+			order.POST("/", PubOrderController.StoreOrder)
 		}
 	}
 
