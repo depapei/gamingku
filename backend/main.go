@@ -2,6 +2,7 @@ package main
 
 import (
 	AdminCategoryController "backend/controllers/admin/category"
+	PubAuthController "backend/controllers/public/auth"
 	PubCategoryController "backend/controllers/public/category"
 	PubOrderController "backend/controllers/public/order"
 	PubProductController "backend/controllers/public/product"
@@ -32,6 +33,11 @@ func main() {
 
 	public := r.Group("/")
 	{
+		auth := public.Group("/auth")
+		{
+			auth.POST("/login", PubAuthController.Login)
+			auth.POST("/register", PubAuthController.Register)
+		}
 		category := public.Group("/category")
 		{
 			category.GET("/", PubCategoryController.GetCategories)
