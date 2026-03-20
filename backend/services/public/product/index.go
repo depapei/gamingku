@@ -3,9 +3,9 @@ package PubProductService
 import (
 	DataAccess "backend/db"
 	"backend/model"
-	"strconv"
 
 	"github.com/lib/pq"
+	"gorm.io/gorm"
 )
 
 type ResVariant struct {
@@ -45,17 +45,14 @@ type ResIndexProduct struct {
 
 func GetProducts(category string, search string, sortBy string, sort string) ([]ResIndexProduct, error){
 	var products []model.Product
-	raw := DataAccess.DB
+	raw := DataAccess.DB.
+		Select("id", "name", "price", "discount_price", "stock", "category_id", "featured", "images").
+		Preload("Category", func (db *gorm.DB) *gorm.DB{
+			return db.Select("id", "name", "parent_id")
+		})
 	
 	if len(category) > 0 {
-		var cats []model.Category
-		raw.Where("parent_id = ?", category).Find(&cats)
-		var all_ids []string
-		all_ids = append(all_ids, category)
-		for _, cat := range cats{
-			all_ids = append(all_ids, strconv.Itoa(int(cat.ID)))
-		}
-		raw = raw.Where("category_id IN ?", all_ids)
+		raw = raw.Where(`category_id = ? OR category_id IN (SELECT id FROM categories WHERE parent_id = ?)`, category, category)
 	}
 
 	if len(search) > 0 {
