@@ -11,13 +11,15 @@ func CreateCategory(input Category.ResCategory) error {
 	raw := DataAccess.DB
 
 	newCategory := model.Category{
-		Name: input.Name,
-		Slug: *input.Slug,
-		ParentId: input.ParentId,
+		Name:        input.Name,
+		Slug:        *input.Slug,
+		ParentId:    input.ParentId,
+		Image:       input.Image,
 		CreatedById: input.CreatedById,
 	}
 
-	err := raw.Create(&newCategory).Error; if err != nil {
+	err := raw.Create(&newCategory).Error
+	if err != nil {
 		log.Println(err.Error())
 		return err
 	}
