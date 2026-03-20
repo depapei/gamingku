@@ -12,6 +12,7 @@ type ResSpec struct {
 }
 
 type ResOption struct {
+	ID          *int   `json:"id,omitempty" binding:"required"`
 	Name        string `json:"name" binding:"required"`
 	IsAvailable bool   `json:"isAvailable" binding:"required"`
 }

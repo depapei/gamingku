@@ -31,7 +31,9 @@ func GetDetail(slug string) (Product.ResProduct, error) {
 
 		var options []Product.ResOption
 		for _, option := range variant.Options {
+			id := int(option.ID)
 			options = append(options, Product.ResOption{
+				ID:          &id,
 				Name:        option.Name,
 				IsAvailable: option.IsAvailable,
 			})

@@ -2,6 +2,7 @@ package main
 
 import (
 	AdminCategoryController "backend/controllers/admin/category"
+	AdminOrderController "backend/controllers/admin/order"
 	AdminProductController "backend/controllers/admin/product"
 	PubAuthController "backend/controllers/public/auth"
 	PubCategoryController "backend/controllers/public/category"
@@ -68,6 +69,10 @@ func main() {
 			category.PUT("/:id", AdminCategoryController.UpdateCategory)
 			category.DELETE("/:id", AdminCategoryController.DeleteCategory)
 			category.GET("/:id", AdminCategoryController.GetDetail)
+		}
+		order := admin.Group("/order")
+		{
+			order.GET("/", AdminOrderController.GetOrders)
 		}
 	}
 
