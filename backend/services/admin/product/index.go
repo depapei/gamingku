@@ -11,8 +11,8 @@ import (
 func GetProducts(category string, search string, sortBy string, sort string) ([]Product.ResIndexProduct, error) {
 	var products []model.Product
 	raw := DataAccess.DB.
-		Select("id", "name", "price", "discount_price", "stock", "category_id", "featured", "images").
-		Preload("Category", func (db *gorm.DB) *gorm.DB{
+		Select("id", "name", "price", "discount_price", "stock", "category_id", "featured", "slug", "images").
+		Preload("Category", func(db *gorm.DB) *gorm.DB {
 			return db.Select("id", "name", "parent_id")
 		})
 

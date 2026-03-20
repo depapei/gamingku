@@ -11,7 +11,8 @@ import (
 func GetDetail(c *gin.Context) {
 	slug := c.Param("slug")
 
-	response, err := PubProductService.GetDetail(slug); if err != nil {
+	response, err := PubProductService.GetDetail(slug)
+	if err != nil {
 		message := helper.ParseError(err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
@@ -22,6 +23,6 @@ func GetDetail(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"data": response,
+		"data":    response,
 	})
 }
