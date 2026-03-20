@@ -65,6 +65,9 @@ func main() {
 		category := admin.Group("/category")
 		{
 			category.GET("/", AdminCategoryController.GetCategories)
+			category.POST("/", AdminCategoryController.CreateCategory)
+			category.PUT("/:id", AdminCategoryController.UpdateCategory)
+			category.DELETE("/:id", AdminCategoryController.DeleteCategory)
 			category.GET("/:id", AdminCategoryController.GetDetail)
 		}
 	}
