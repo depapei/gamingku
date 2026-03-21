@@ -2,12 +2,15 @@ package helper
 
 import (
 	"errors"
+	"log"
 	"strings"
 
 	"gorm.io/gorm"
 )
 
 func ParseError(err error) string {
+	log.Println(err.Error())
+
 	if err == nil {
 		return ""
 	}
