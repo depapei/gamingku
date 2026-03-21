@@ -24,7 +24,7 @@ func Login(input auth.LoginInput) (bool, string, error) {
 		return false, "error", err
 	}
 
-	signed, token, err := jwt.Claim(input)
+	signed, token, err := jwt.Claim(user)
 
 	return signed, token, err
 }

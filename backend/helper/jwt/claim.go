@@ -1,8 +1,8 @@
 package jwt
 
 import (
-	"backend/helper/type/auth"
 	jwtType "backend/helper/type/jwt"
+	"backend/model"
 	"log"
 	"os"
 	"time"
@@ -12,10 +12,11 @@ import (
 
 var jwtSecret = []byte(os.Getenv("SECRET_KEY"))
 
-func Claim(input auth.LoginInput) (bool, string, error) {
+func Claim(user model.User) (bool, string, error) {
 	expTime := time.Now().Add(2 * time.Hour)
 	claim := jwtType.JwtClaim{
-		UserEmail: input.Email,
+		UserEmail: user.Email,
+		UserRole:  user.Role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expTime),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

@@ -10,6 +10,7 @@ import (
 	PubProductController "backend/controllers/public/product"
 	DataAccess "backend/db"
 	"backend/helper"
+	Middleware "backend/middleware"
 	Migration "backend/migration"
 	Seeder "backend/seeder"
 	"log"
@@ -55,6 +56,7 @@ func main() {
 	}
 
 	admin := r.Group("/admin")
+	admin.Use(Middleware.AuthMiddleware())
 	{
 		product := admin.Group("/product")
 		{
