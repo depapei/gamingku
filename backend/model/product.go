@@ -3,6 +3,7 @@ package model
 import (
 	"time"
 
+	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
@@ -15,29 +16,32 @@ type Category struct {
 	CreatedAt   time.Time      `json:"createdAt"`
 	UpdatedAt   time.Time      `json:"updatedAt"`
 	DeletedAt   gorm.DeletedAt `gorm:"index" json:"deletedAt"`
-	CreatedById int            `json:"createdBy"`
+	CreatedById int            `gorm:"column:created_by" json:"createdBy"`
 
 	CreatedBy User
 	Product   []Product
 }
 
 type Product struct {
-	ID            uint           `gorm:"primaryKey" json:"id"`
-	Name          string         `json:"name"`
-	Slug          string         `json:"slug"`
-	DiscountPrice float64        `json:"discountPrice"`
-	Stock         float64        `json:"stock"`
-	CategoryId    int            `json:"categoryId"`
-	Rating        int8           `json:"rating"`
-	ReviewCount   int64          `json:"reviewCount"`
-	Description   string         `json:"description"`
-	Featured      bool           `json:"featured"`
-	CreatedAt     time.Time      `json:"createdAt"`
-	UpdatedAt     time.Time      `json:"updatedAt"`
-	DeletedAt     gorm.DeletedAt `gorm:"index" json:"deletedAt"`
-	CreatedById   int            `json:"createdBy"`
+	ID            uint            `gorm:"primaryKey" json:"id"`
+	Name          string          `json:"name"`
+	Slug          string          `json:"slug"`
+	Price         float64         `json:"price"`
+	DiscountPrice float64         `json:"discountPrice"`
+	Stock         float64         `json:"stock"`
+	CategoryId    int             `json:"categoryId"`
+	Images        pq.StringArray  `gorm:"serializer:json" json:"images"`
+	Rating        int8            `json:"rating"`
+	ReviewCount   int64           `json:"reviewCount"`
+	Description   string          `json:"description"`
+	Featured      bool            `json:"featured"`
+	CreatedAt     time.Time       `json:"createdAt"`
+	UpdatedAt     time.Time       `json:"updatedAt"`
+	DeletedAt     *gorm.DeletedAt `gorm:"index" json:"-"`
+	CreatedById   int             `gorm:"column:created_by" json:"createdBy"`
 
 	CreatedBy      User
+	Category       Category
 	Variants       []ProductVariants
 	Specifications []ProductSpecifications
 }
@@ -49,23 +53,25 @@ type ProductVariants struct {
 	CreatedAt   time.Time      `json:"createdAt"`
 	UpdatedAt   time.Time      `json:"updatedAt"`
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
-	CreatedById int            `json:"createdBy"`
+	CreatedById int            `gorm:"column:created_by" json:"createdBy"`
 
 	CreatedBy User
-	Options   []VariantOptions `gorm:"foreignKey:ID;refrences:VariantId"`
+	Options   []VariantOptions `gorm:"foreignKey:VariantId;references:ID"`
+	// Options []VariantOptions
 }
 
 type VariantOptions struct {
 	ID          uint           `gorm:"primaryKey"`
 	VariantId   int            `json:"variantId"`
 	Name        string         `json:"name"`
+	IsAvailable bool           `json:"available"`
 	CreatedAt   time.Time      `json:"createdAt"`
 	UpdatedAt   time.Time      `json:"updatedAt"`
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
-	CreatedById int            `json:"createdBy"`
+	CreatedById int            `gorm:"column:created_by" json:"createdBy"`
 
 	CreatedBy       User
-	ProductVariants ProductVariants `gorm:"foreignKey:VariantId;refrences:ID"`
+	ProductVariants ProductVariants `gorm:"foreignKey:VariantId;reference:ID"`
 }
 
 type ProductSpecifications struct {
@@ -76,7 +82,7 @@ type ProductSpecifications struct {
 	CreatedAt   time.Time      `json:"createdAt"`
 	UpdatedAt   time.Time      `json:"updatedAt"`
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
-	CreatedById int            `json:"createdBy"`
+	CreatedById int            `gorm:"column:created_by" json:"createdBy"`
 
 	CreatedBy User
 	Product   Product
@@ -88,7 +94,7 @@ type SpecificationKeys struct {
 	CreatedAt   time.Time      `json:"createdAt"`
 	UpdatedAt   time.Time      `json:"updatedAt"`
 	DeletedAt   gorm.DeletedAt `gorm:"index"`
-	CreatedById int            `json:"createdBy"`
+	CreatedById int            `gorm:"column:created_by" json:"createdBy"`
 
 	CreatedBy User
 }

@@ -1,8 +1,18 @@
 package main
 
 import (
+	AdminCategoryController "backend/controllers/admin/category"
+	AdminOrderController "backend/controllers/admin/order"
+	AdminProductController "backend/controllers/admin/product"
+	PubAuthController "backend/controllers/public/auth"
+	PubCategoryController "backend/controllers/public/category"
+	PubOrderController "backend/controllers/public/order"
+	PubProductController "backend/controllers/public/product"
 	DataAccess "backend/db"
+	"backend/helper"
+	Middleware "backend/middleware"
 	Migration "backend/migration"
+	Seeder "backend/seeder"
 	"log"
 
 	"github.com/gin-gonic/gin"
@@ -11,13 +21,62 @@ import (
 
 func main() {
 
-	err := godotenv.Load(); if err != nil {
+	err := godotenv.Load()
+	if err != nil {
 		log.Fatal("failed to load .env files")
 	}
 
 	DataAccess.Connect()
 	Migration.Migrate(DataAccess.DB)
-	r := gin.Default()
+	Seeder.Stack()
 
-	r.Run();
+	r := gin.Default()
+	r.Use(helper.Cors())
+
+	public := r.Group("/")
+	{
+		auth := public.Group("/auth")
+		{
+			auth.POST("/login", PubAuthController.Login)
+			auth.POST("/register", PubAuthController.Register)
+		}
+		category := public.Group("/category")
+		{
+			category.GET("/", PubCategoryController.GetCategories)
+		}
+		product := public.Group("/product")
+		{
+			product.GET("/", PubProductController.GetProducts)
+			product.GET("/:slug", PubProductController.GetDetail)
+		}
+		order := public.Group("/order")
+		{
+			order.POST("/", PubOrderController.StoreOrder)
+		}
+	}
+
+	admin := r.Group("/admin")
+	admin.Use(Middleware.AuthMiddleware())
+	{
+		product := admin.Group("/product")
+		{
+			product.GET("/", AdminProductController.GetProducts)
+			product.POST("/", AdminProductController.CreateProduct)
+			product.GET("/:slug", AdminProductController.GetDetail)
+		}
+		category := admin.Group("/category")
+		{
+			category.GET("/", AdminCategoryController.GetCategories)
+			category.POST("/", AdminCategoryController.CreateCategory)
+			category.PUT("/:id", AdminCategoryController.UpdateCategory)
+			category.DELETE("/:id", AdminCategoryController.DeleteCategory)
+			category.GET("/:id", AdminCategoryController.GetDetail)
+		}
+		order := admin.Group("/order")
+		{
+			order.GET("/", AdminOrderController.GetOrders)
+		}
+	}
+
+	r.Run()
 }
