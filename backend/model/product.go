@@ -56,7 +56,7 @@ type ProductVariants struct {
 	CreatedById int            `gorm:"column:created_by" json:"createdBy"`
 
 	CreatedBy User
-	Options   []VariantOptions `gorm:"foreignKey:VariantId;reference:ID"`
+	Options   []VariantOptions `gorm:"foreignKey:VariantId;references:ID"`
 	// Options []VariantOptions
 }
 
