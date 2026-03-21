@@ -44,7 +44,7 @@ type ResIndexProduct struct {
 	Images        pq.StringArray `json:"images"`
 }
 
-func GetProducts(category string, search string, sortBy string, sort string, limit string) ([]ResIndexProduct, error) {
+func GetProducts(category string, search string, sortBy string, sort string, limit string, featured string) ([]ResIndexProduct, error) {
 	var products []model.Product
 	var response []ResIndexProduct
 	raw := DataAccess.DB.
@@ -86,6 +86,10 @@ func GetProducts(category string, search string, sortBy string, sort string, lim
 		}
 	} else {
 		raw = raw.Limit(20)
+	}
+
+	if len(featured) > 0 {
+		raw = raw.Where("featured = ?", true)
 	}
 
 	raw.Find(&products)

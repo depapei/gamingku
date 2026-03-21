@@ -14,8 +14,9 @@ func GetProducts(c *gin.Context) {
 	sortBy := c.DefaultQuery("sortBy", "")
 	sort := c.DefaultQuery("sort", "")
 	limit := c.DefaultQuery("limit", "")
+	isfeatured := c.DefaultQuery("featured", "")
 
-	response, err := PubProductService.GetProducts(category, search, sortBy, sort, limit)
+	response, err := PubProductService.GetProducts(category, search, sortBy, sort, limit, isfeatured)
 
 	if err != nil {
 		message := helper.ParseError(err)
