@@ -13,8 +13,9 @@ func GetProducts(c *gin.Context) {
 	search := c.DefaultQuery("search", "")
 	sortBy := c.DefaultQuery("sortBy", "")
 	sort := c.DefaultQuery("sort", "")
+	limit := c.DefaultQuery("limit", "")
 
-	response, err := PubProductService.GetProducts(category, search, sortBy, sort)
+	response, err := PubProductService.GetProducts(category, search, sortBy, sort, limit)
 
 	if err != nil {
 		message := helper.ParseError(err)
@@ -27,6 +28,6 @@ func GetProducts(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"data": response,
+		"data":    response,
 	})
 }

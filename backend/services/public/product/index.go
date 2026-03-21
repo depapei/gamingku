@@ -3,6 +3,7 @@ package PubProductService
 import (
 	DataAccess "backend/db"
 	"backend/model"
+	"strconv"
 
 	"github.com/lib/pq"
 	"gorm.io/gorm"
@@ -43,8 +44,9 @@ type ResIndexProduct struct {
 	Images        pq.StringArray `json:"images"`
 }
 
-func GetProducts(category string, search string, sortBy string, sort string) ([]ResIndexProduct, error) {
+func GetProducts(category string, search string, sortBy string, sort string, limit string) ([]ResIndexProduct, error) {
 	var products []model.Product
+	var response []ResIndexProduct
 	raw := DataAccess.DB.
 		Select("id", "name", "price", "discount_price", "stock", "category_id", "featured", "images", "slug").
 		Preload("Category", func(db *gorm.DB) *gorm.DB {
@@ -72,12 +74,25 @@ func GetProducts(category string, search string, sortBy string, sort string) ([]
 		raw = raw.Order("name ASC")
 	}
 
+	if len(limit) > 0 {
+		intLimit, err := strconv.ParseInt(limit, 0, 64)
+		if err != nil {
+			return response, err
+		}
+		if intLimit >= 50 {
+			raw = raw.Limit(50)
+		} else {
+			raw = raw.Limit(int(intLimit))
+		}
+	} else {
+		raw = raw.Limit(20)
+	}
+
 	raw.Find(&products)
 
 	err := raw.Error
 
 	// mapping response
-	var response []ResIndexProduct
 	for _, product := range products {
 		response = append(response, ResIndexProduct{
 			ID:            product.ID,

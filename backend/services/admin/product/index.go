@@ -4,12 +4,14 @@ import (
 	DataAccess "backend/db"
 	Product "backend/helper/type/product"
 	"backend/model"
+	"strconv"
 
 	"gorm.io/gorm"
 )
 
-func GetProducts(category string, search string, sortBy string, sort string) ([]Product.ResIndexProduct, error) {
+func GetProducts(category string, search string, sortBy string, sort string, limit string) ([]Product.ResIndexProduct, error) {
 	var products []model.Product
+	var response []Product.ResIndexProduct
 	raw := DataAccess.DB.
 		Select("id", "name", "price", "discount_price", "stock", "category_id", "featured", "slug", "images").
 		Preload("Category", func(db *gorm.DB) *gorm.DB {
@@ -37,10 +39,23 @@ func GetProducts(category string, search string, sortBy string, sort string) ([]
 		raw = raw.Order("name ASC")
 	}
 
+	if len(limit) > 0 {
+		intLimit, err := strconv.ParseInt(limit, 0, 64)
+		if err != nil {
+			return response, err
+		}
+		if intLimit >= 50 {
+			raw = raw.Limit(50)
+		} else {
+			raw = raw.Limit(int(intLimit))
+		}
+	} else {
+		raw = raw.Limit(20)
+	}
+
 	err := raw.Find(&products).Error
 
 	// mapping response
-	var response []Product.ResIndexProduct
 	for _, product := range products {
 		response = append(response, Product.ResIndexProduct{
 			ID:            product.ID,
