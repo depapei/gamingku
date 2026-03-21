@@ -1,23 +1,45 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { categories } from "../../data/categories";
+import { useCategories } from "@/src/hooks/useCategories";
 
 export const MegaMenu = () => {
   // Get main categories (those without parentId)
-  const mainCategories = categories.filter((c) => !c.parentId);
+  // const mainCategories = categories.filter((c) => !c.parentId);
+  const { data, isSuccess, isLoading } = useCategories();
+  const mainCategories = useMemo(() => {
+    if (data) {
+      return data.filter((c) => !c.parentId);
+    }
+    return [];
+  }, [data, isSuccess]);
 
   // State to track hovered main category
   const [activeCategory, setActiveCategory] = useState(mainCategories[0]?.id);
 
   // Get subcategories for the active category
-  const subCategories = categories.filter((c) => c.parentId === activeCategory);
+  // const subCategories = categories.filter((c) => c.parentId === activeCategory);
+  const subCategories = useMemo(() => {
+    if (data) {
+      const filteredData = data.filter((c) => c.parentId === activeCategory);
+      return filteredData;
+    }
+    return [];
+  }, [data, isSuccess, activeCategory]);
+
+  useEffect(() => {
+    if (subCategories) {
+      console.log(activeCategory);
+      console.log(subCategories);
+    }
+  }, [activeCategory]);
 
   return (
     <div className="flex w-[600px] bg-white rounded-md shadow-xl border border-zinc-100 overflow-hidden">
       {/* Column 1: Main Categories */}
       <div className="w-1/3 bg-zinc-50 py-4 border-r border-zinc-100">
         <ul className="space-y-1">
-          {mainCategories.map((category) => (
+          {mainCategories?.map((category) => (
             <li
               key={category.id}
               onMouseEnter={() => setActiveCategory(category.id)}
@@ -27,11 +49,25 @@ export const MegaMenu = () => {
                   : "text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 border-l-2 border-transparent"
               }`}
             >
-              <Link to={`/category/${category.slug}`} className="block w-full">
+              <Link
+                to={`/category/${category.slug}`}
+                className="block w-full text-zinc-600"
+              >
                 {category.name}
               </Link>
             </li>
           ))}
+          {isLoading &&
+            [1, 2, 3].map((category) => (
+              <li
+                key={category}
+                className={`animate-pulse px-6 py-2 cursor-pointer transition-colors`}
+              >
+                <div className="block h-5 w-full text-zinc-200 bg-gray-200 rounded-xl">
+                  -
+                </div>
+              </li>
+            ))}
         </ul>
       </div>
 

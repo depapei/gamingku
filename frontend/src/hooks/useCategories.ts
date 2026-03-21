@@ -1,9 +1,10 @@
-import { useQuery } from '@tanstack/react-query';
-import { categoryService } from '../services/category.service';
+import { useQuery } from "@tanstack/react-query";
+import { categoryService } from "../services/category.service";
 
 export const useCategories = () => {
   return useQuery({
-    queryKey: ['categories'],
+    queryKey: ["categories"],
     queryFn: () => categoryService.getCategories(),
+    staleTime: 0,
   });
 };

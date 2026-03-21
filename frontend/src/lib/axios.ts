@@ -1,17 +1,17 @@
-import axios from 'axios';
+import axios from "axios";
 
 // In a real app, this would point to your backend API
 // For this mock setup, we'll use an interceptor to simulate API calls
 export const api = axios.create({
-  baseURL: '/api',
+  baseURL: "http://localhost:8080",
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
 });
 
 // Mock interceptor to simulate network delay
 api.interceptors.request.use(async (config) => {
   // Simulate network delay
-  await new Promise(resolve => setTimeout(resolve, 500));
+  await new Promise((resolve) => setTimeout(resolve, 500));
   return config;
 });
