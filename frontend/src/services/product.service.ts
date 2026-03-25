@@ -45,7 +45,7 @@ export const productService = {
     if (params?.category) {
       // Find the category and its subcategories
       const targetCategory = categories.find(
-        (c) => c.id === params.category || c.slug === params.category,
+        (c) => c.id === parseInt(params.category) || c.slug === params.category,
       );
       if (targetCategory) {
         const subCategoryIds = categories

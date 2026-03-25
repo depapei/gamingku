@@ -25,6 +25,7 @@ const schema = yup
     categoryId: yup.number().required("Category is required"),
     description: yup.string().required("Description is required"),
     featured: yup.boolean().default(false),
+    imageUrls: yup.array(),
   })
   .required();
 
@@ -55,6 +56,7 @@ export const AdminProductForm = ({
       categoryId: 0,
       description: "",
       featured: false,
+      imageUrls: [],
     },
   });
 
@@ -181,28 +183,23 @@ export const AdminProductForm = ({
           name="categoryId"
           control={control}
           render={({ field }) => {
-            const categoryOptions =
-              categories
-                ?.filter((c) => !c.parentId)
-                .map((cat) => ({
-                  label: cat.name,
-                  options: [
-                    { label: `${cat.name} (Main)`, value: cat.id },
-                    ...(categories
-                      ?.filter((sub) => sub.parentId === cat.id)
-                      .map((sub) => {
-                        let label: string = sub.name;
-                        if (cat.id === 0 || cat.id === null) {
-                          label = "Choose Category";
-                        }
-                        const value = {
-                          label: label,
-                          value: sub.id,
-                        };
-                        return value;
-                      }) || []),
-                  ],
-                })) || [];
+            const groupedOptions = categories
+              ?.filter((cat) => !cat.parentId)
+              .map((parent) => ({
+                label: parent.name,
+                options: [
+                  {
+                    label: `${parent.name} (Main)`,
+                    value: parent.id,
+                  },
+                  ...(categories
+                    ?.filter((child) => child.parentId === parent.id)
+                    .map((child) => ({
+                      label: child.name,
+                      value: child.id,
+                    })) || []),
+                ],
+              }));
 
             return (
               <Form.Item
@@ -220,7 +217,7 @@ export const AdminProductForm = ({
                         .localeCompare((optionB?.label ?? "").toLowerCase()),
                   }}
                   className="w-full"
-                  options={categoryOptions}
+                  options={groupedOptions}
                 />
               </Form.Item>
             );
@@ -237,7 +234,7 @@ export const AdminProductForm = ({
             validateStatus={errors.description ? "error" : ""}
             help={errors.description?.message}
           >
-            <Input.TextArea {...field} rows={4} />
+            <Input.TextArea {...field} rows={2} />
           </Form.Item>
         )}
       />
