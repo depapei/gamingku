@@ -1,5 +1,6 @@
 import { useForm, Controller } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
+import { useEffect } from "react";
 import * as yup from "yup";
 import { Form, Input, InputNumber, Switch, Button, Select } from "antd";
 import { useCategories } from "../../hooks/useCategories";
@@ -21,14 +22,13 @@ const schema = yup
       .integer("Stock must be an integer")
       .min(0, "Stock cannot be negative")
       .required("Stock is required"),
-    categoryId: yup.string().required("Category is required"),
+    categoryId: yup.number().required("Category is required"),
     description: yup.string().required("Description is required"),
     featured: yup.boolean().default(false),
   })
   .required();
 
 type FormData = yup.InferType<typeof schema>;
-
 export const AdminProductForm = ({
   onSubmit,
   initialData,
@@ -36,10 +36,12 @@ export const AdminProductForm = ({
   onSubmit: (data: FormData) => void;
   initialData?: any;
 }) => {
-  const { data: categories } = useCategories();
+  const { data: categories, isSuccess: categoriesSuccess } = useCategories();
 
   const {
     getValues,
+    setValue,
+    watch,
     control,
     handleSubmit,
     formState: { errors },
@@ -50,11 +52,32 @@ export const AdminProductForm = ({
       slug: "",
       price: 0,
       stock: 0,
-      categoryId: "",
+      categoryId: 0,
       description: "",
       featured: false,
     },
   });
+
+  useEffect(() => {
+    const name: string = getValues("name");
+    const newSlug: string = name
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .trim()
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-");
+    setValue("slug", newSlug);
+  }, [watch("name")]);
+
+  useEffect(() => {
+    const category = getValues("categoryId");
+    if (category === 0 && categoriesSuccess) {
+      const defaultCategory: number = categories.find((_, idx) => idx === 0).id;
+      setValue("categoryId", defaultCategory);
+    }
+  }, [watch("categoryId"), categories]);
 
   return (
     <Form layout="vertical" onFinish={handleSubmit(onSubmit)}>
@@ -67,7 +90,13 @@ export const AdminProductForm = ({
             validateStatus={errors.name ? "error" : ""}
             help={errors.name?.message}
           >
-            <Input {...field} />
+            <Input
+              {...field}
+              onChange={(e) => {
+                const name = e.target.value.toUpperCase();
+                field.onChange(name);
+              }}
+            />
           </Form.Item>
         )}
       />
@@ -75,6 +104,7 @@ export const AdminProductForm = ({
       <Controller
         name="slug"
         control={control}
+        disabled
         render={({ field }) => (
           <Form.Item
             label="Slug"
@@ -98,8 +128,8 @@ export const AdminProductForm = ({
             >
               <InputNumber
                 {...field}
-                className="w-full"
                 prefix="Rp"
+                style={{ width: "100%" }}
                 formatter={(value) =>
                   `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ".")
                 }
@@ -120,7 +150,7 @@ export const AdminProductForm = ({
             >
               <InputNumber
                 {...field}
-                className="w-full"
+                style={{ width: "100%" }}
                 prefix="Rp"
                 formatter={(value) =>
                   `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ".")
@@ -142,7 +172,7 @@ export const AdminProductForm = ({
               validateStatus={errors.stock ? "error" : ""}
               help={errors.stock?.message}
             >
-              <InputNumber {...field} className="w-full" />
+              <InputNumber {...field} style={{ width: "100%" }} />
             </Form.Item>
           )}
         />
@@ -160,10 +190,17 @@ export const AdminProductForm = ({
                     { label: `${cat.name} (Main)`, value: cat.id },
                     ...(categories
                       ?.filter((sub) => sub.parentId === cat.id)
-                      .map((sub) => ({
-                        label: sub.name,
-                        value: sub.id,
-                      })) || []),
+                      .map((sub) => {
+                        let label: string = sub.name;
+                        if (cat.id === 0 || cat.id === null) {
+                          label = "Choose Category";
+                        }
+                        const value = {
+                          label: label,
+                          value: sub.id,
+                        };
+                        return value;
+                      }) || []),
                   ],
                 })) || [];
 
@@ -175,6 +212,13 @@ export const AdminProductForm = ({
               >
                 <Select
                   {...field}
+                  showSearch={{
+                    optionFilterProp: "label",
+                    filterSort: (optionA, optionB) =>
+                      (optionA?.label ?? "")
+                        .toLowerCase()
+                        .localeCompare((optionB?.label ?? "").toLowerCase()),
+                  }}
                   className="w-full"
                   options={categoryOptions}
                 />
