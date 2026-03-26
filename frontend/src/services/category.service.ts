@@ -13,4 +13,22 @@ export const categoryService = {
     await new Promise((resolve) => setTimeout(resolve, 200));
     return categories.find((c) => c.slug === slug);
   },
+
+  createCategory: async (payload: Category): Promise<Response | undefined> => {
+    const { data } = await api.post("/admin/category/", payload);
+    return data.success;
+  },
+
+  updateCategory: async (
+    payload: Category,
+    id: number,
+  ): Promise<Response | undefined> => {
+    const { data } = await api.put(`/admin/category/${id}`, payload);
+    return data.success;
+  },
+
+  deleteCategory: async (id: number): Promise<Response | undefined> => {
+    const { data } = await api.delete(`/admin/category/${id}`);
+    return data.success;
+  },
 };

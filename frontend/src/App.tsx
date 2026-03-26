@@ -19,6 +19,7 @@ import { About } from "./app/about/About";
 import { Manual } from "./app/support/Manual";
 import { Contact } from "./app/support/Contact";
 import ScrollToTop from "./lib/ScrollToTop";
+import { AdminCategories } from "./app/admin/categories/AdminCategories";
 
 export default function App() {
   return (
@@ -44,6 +45,7 @@ export default function App() {
           <Route path="/admin" element={<AdminLayout />}>
             <Route index element={<AdminDashboard />} />
             <Route path="products" element={<AdminProducts />} />
+            <Route path="categories" element={<AdminCategories />} />
           </Route>
         </Routes>
       </BrowserRouter>

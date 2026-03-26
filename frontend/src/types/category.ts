@@ -4,4 +4,5 @@ export interface Category {
   slug: string;
   parentId?: number;
   image?: string;
+  createdBy?: number;
 }
