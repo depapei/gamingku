@@ -20,14 +20,25 @@ export const RegisterForm = () => {
   const navigate = useNavigate();
 
   const { mutate: register, isPending: registerLoading } = authRegister();
+  const { mutate: login, isPending: loginLoading } = authLogin();
 
   const onSubmit = (data: any) => {
     register(data, {
       onSuccess: (res: any) => {
         const response: SuccessResponse = res;
-        localStorage.setItem("user", JSON.stringify(response.token));
         message.success(response.message);
-        // navigate("/");
+        login(data, {
+          onSuccess: (res: any) => {
+            const response: SuccessResponse = res;
+            message.success(`Welcome ${data.name}!`);
+            localStorage.setItem("user", JSON.stringify(response.token));
+            navigate("/");
+          },
+          onError: (err: AxiosError) => {
+            const response: ErrorResponse = err.response.data;
+            message.error(response.message);
+          },
+        });
       },
       onError: (err: AxiosError) => {
         const response: ErrorResponse = err.response.data;
@@ -110,7 +121,7 @@ export const RegisterForm = () => {
       <Form.Item>
         <Link to={"/auth"} className="text-zinc-600!">
           Already have account?{" "}
-          <span className="text-blue-600 hover:underline">register</span>
+          <span className="text-blue-600 hover:underline">login</span>
         </Link>
       </Form.Item>
 
