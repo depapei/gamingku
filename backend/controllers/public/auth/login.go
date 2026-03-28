@@ -33,7 +33,7 @@ func Login(c *gin.Context) {
 			message = "Wrong password!"
 		}
 		c.JSON(http.StatusBadRequest, gin.H{
-			"status":  false,
+			"success":  false,
 			"message": message,
 		})
 		return
