@@ -10,10 +10,10 @@ export const AuthLayout = () => {
     <Layout className="min-h-screen">
       <Layout>
         <Content className="bg-zinc-50 overflow-auto">
-          <div className="max-w-6xl mx-auto">
-            <div className="min-h-screen grid md:grid-cols-2">
+          <div className="mx-auto">
+            <div className="min-h-screen grid md:grid-cols-2 xl:grid-cols-3">
               {/* LEFT */}
-              <div className="hidden md:flex items-center justify-center bg-zinc-900 text-white p-10">
+              <div className="hidden xl:col-span-2 md:flex items-center justify-center bg-zinc-900 text-white p-10">
                 <div className="max-w-md">
                   <h1 className="text-4xl font-bold mb-4">Welcome Back</h1>
                   <p className="text-zinc-400">
