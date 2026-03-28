@@ -70,10 +70,6 @@ export const MainLayout = () => {
     items: items,
   };
 
-  useEffect(() => {
-    console.log(userMenu.items);
-  }, items);
-
   const mobileMenu: MenuProps = {
     items: [
       { key: "products", label: <Link to="/products">Products</Link> },

@@ -27,13 +27,6 @@ export const MegaMenu = () => {
     return [];
   }, [data, isSuccess, activeCategory]);
 
-  useEffect(() => {
-    if (subCategories) {
-      console.log(activeCategory);
-      console.log(subCategories);
-    }
-  }, [activeCategory]);
-
   return (
     <div className="flex w-[600px] bg-white rounded-md shadow-xl border border-zinc-100 overflow-hidden">
       {/* Column 1: Main Categories */}
@@ -45,13 +38,13 @@ export const MegaMenu = () => {
               onMouseEnter={() => setActiveCategory(category.id)}
               className={`px-6 py-2 cursor-pointer transition-colors ${
                 activeCategory === category.id
-                  ? "bg-white text-zinc-900 font-medium border-l-2 border-zinc-900"
-                  : "text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 border-l-2 border-transparent"
+                  ? "bg-white text-zinc-900! font-medium border-l-2 border-zinc-900!"
+                  : "text-zinc-600! hover:text-zinc-900! hover:bg-zinc-100 border-l-2 border-transparent"
               }`}
             >
               <Link
                 to={`/category/${category.slug}`}
-                className="block w-full text-zinc-600"
+                className="block w-full text-zinc-600!"
               >
                 {category.name}
               </Link>
@@ -73,7 +66,7 @@ export const MegaMenu = () => {
 
       {/* Column 2: Subcategories / Products */}
       <div className="w-2/3 p-6 bg-white">
-        <h3 className="text-sm font-semibold text-zinc-900 uppercase tracking-wider mb-4 border-b border-zinc-100 pb-2">
+        <h3 className="text-sm font-semibold text-zinc-900! uppercase tracking-wider mb-4 border-b border-zinc-100! pb-2">
           {mainCategories.find((c) => c.id === activeCategory)?.name}
         </h3>
 
@@ -83,7 +76,7 @@ export const MegaMenu = () => {
               <li key={sub.id}>
                 <Link
                   to={`/category/${sub.slug}`}
-                  className="text-sm text-zinc-600 hover:text-zinc-900 hover:underline transition-colors block"
+                  className="text-sm text-zinc-600! hover:text-zinc-900! hover:underline transition-colors block"
                 >
                   {sub.name}
                 </Link>
@@ -97,7 +90,7 @@ export const MegaMenu = () => {
         <div className="mt-8 pt-4 border-t border-zinc-100">
           <Link
             to={`/category/${mainCategories.find((c) => c.id === activeCategory)?.slug}`}
-            className="text-sm font-medium text-zinc-900 hover:underline flex items-center"
+            className="text-sm font-medium text-zinc-900! hover:underline flex items-center"
           >
             Shop all {mainCategories.find((c) => c.id === activeCategory)?.name}{" "}
             &rarr;
