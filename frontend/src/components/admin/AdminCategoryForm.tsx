@@ -114,13 +114,8 @@ export const AdminCategoryForm = ({
           const groupedOptions = categories
             ?.filter((cat) => !cat.parentId)
             .map((parent) => ({
-              label: parent.name,
-              options: [
-                {
-                  label: `${parent.name}`,
-                  value: parent.id,
-                },
-              ],
+              label: `${parent.name}`,
+              value: parent.id,
             }));
 
           return (

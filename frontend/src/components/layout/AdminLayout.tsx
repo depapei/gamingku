@@ -1,5 +1,5 @@
-import { Outlet, Link, useLocation } from "react-router-dom";
-import { Layout, Menu } from "antd";
+import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
+import { Layout, Menu, message } from "antd";
 import {
   DashboardOutlined,
   ShoppingOutlined,
@@ -8,11 +8,27 @@ import {
   SettingOutlined,
   LogoutOutlined,
 } from "@ant-design/icons";
+import { useEffect } from "react";
+import { jwtDecode } from "jwt-decode";
+import { Token } from "@/src/types/user";
 
 const { Header, Sider, Content } = Layout;
 
 export const AdminLayout = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const userInfo = jwtDecode<Token>(JSON.parse(localStorage.getItem("user")));
+  const admin = userInfo.user_role === "admin";
+  useEffect(() => {
+    if (!admin) {
+      navigate("/");
+      console.log(userInfo);
+      message.error("Please login as admin first!");
+    }
+  }, []);
+
+  if (!admin) return <></>;
 
   return (
     <Layout className="min-h-screen">

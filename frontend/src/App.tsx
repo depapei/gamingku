@@ -20,6 +20,9 @@ import { Manual } from "./app/support/Manual";
 import { Contact } from "./app/support/Contact";
 import ScrollToTop from "./lib/ScrollToTop";
 import { AdminCategories } from "./app/admin/categories/AdminCategories";
+import { AuthLayout } from "./components/layout/AuthLayout";
+import { Login } from "./app/auth/login";
+import { Register } from "./app/auth/register";
 
 export default function App() {
   return (
@@ -39,6 +42,12 @@ export default function App() {
             <Route path="about" element={<About />} />
             <Route path="support/manual" element={<Manual />} />
             <Route path="support/contact" element={<Contact />} />
+          </Route>
+
+          {/* Authentication Routes */}
+          <Route path="/auth" element={<AuthLayout />}>
+            <Route index element={<Login />} />
+            <Route path="register" element={<Register />} />
           </Route>
 
           {/* Admin Routes */}

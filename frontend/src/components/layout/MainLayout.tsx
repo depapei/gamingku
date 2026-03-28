@@ -2,9 +2,11 @@ import { Outlet, Link, useNavigate } from "react-router-dom";
 import { ShoppingCart, Search, User, Menu, Scale } from "lucide-react";
 import { useCartStore } from "../../store/cartStore";
 import { useCompareStore } from "../../store/compareStore";
-import { Badge, Dropdown, MenuProps, Popover } from "antd";
-import React, { useState } from "react";
+import { Badge, Dropdown, MenuProps, message, Popover } from "antd";
+import React, { useState, useEffect, useMemo } from "react";
 import { MegaMenu } from "./MegaMenu";
+import { jwtDecode } from "jwt-decode";
+import { Token } from "@/src/types/user";
 
 export const MainLayout = () => {
   const totalItems = useCartStore((state) => state.getTotalItems());
@@ -19,12 +21,58 @@ export const MainLayout = () => {
     }
   };
 
-  const userMenu: MenuProps = {
-    items: [
-      { key: "1", label: <Link to="/admin">Admin Dashboard</Link> },
-      { key: "2", label: "Logout" },
-    ],
+  const handleLogout = (e: React.FormEvent) => {
+    e.preventDefault();
+    navigate("/");
+    message.success("Successfully logout!");
+    localStorage.removeItem("user");
   };
+
+  const token = localStorage.getItem("user");
+  const userInfo = useMemo(() => {
+    if (token) {
+      return jwtDecode<Token>(JSON.parse(token));
+    }
+
+    return {
+      user_role: "",
+      user_email: "",
+    };
+  }, [token]);
+
+  const items = useMemo(() => {
+    let items = [];
+    if (!token) {
+      items.push({ key: "2", label: <Link to="/auth">Login</Link> });
+    } else {
+      items.push({
+        key: "3",
+        label: (
+          <div className="w-full" onClick={handleLogout}>
+            Logout
+          </div>
+        ),
+      });
+    }
+
+    if (userInfo.user_role === "admin") {
+      items.push({
+        key: "1",
+        label: <Link to="/admin">Admin Dashboard</Link>,
+      });
+    }
+
+    items.sort((a, b) => a.key - b.key);
+
+    return items;
+  }, [token]);
+  const userMenu: MenuProps = {
+    items: items,
+  };
+
+  useEffect(() => {
+    console.log(userMenu.items);
+  }, items);
 
   const mobileMenu: MenuProps = {
     items: [
