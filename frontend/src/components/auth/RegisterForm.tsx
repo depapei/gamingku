@@ -8,7 +8,7 @@ import { Link, useNavigate } from "react-router-dom";
 import * as yup from "yup";
 
 const schema = yup.object({
-  name: yup.string().required().min(3),
+  name: yup.string().required().min(3).max(25),
   email: yup.string().required().email(),
   avatar: yup.string().notRequired().nullable(),
   password: yup.string().required().min(8),
@@ -131,9 +131,9 @@ export const RegisterForm = () => {
           size="large"
           block
           disabled={registerLoading}
-          className={`bg-zinc-900! border-zinc-900! hover:bg-zinc-800! text-zinc-50! rounded-lg ${registerLoading && "animate-pulse"}`}
+          className={`bg-zinc-900! border-zinc-900! hover:bg-zinc-800! text-zinc-50! rounded-lg ${registerLoading || (loginLoading && "animate-pulse")}`}
         >
-          {registerLoading ? "Loading..." : "Sign Up"}
+          {registerLoading || loginLoading ? "Loading..." : "Sign Up"}
         </Button>
       </Form.Item>
     </Form>
