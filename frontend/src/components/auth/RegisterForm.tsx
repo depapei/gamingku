@@ -30,7 +30,7 @@ export const RegisterForm = () => {
         login(data, {
           onSuccess: (res: any) => {
             const response: SuccessResponse = res;
-            message.success(`Welcome ${data.name}!`);
+            message.success(`Welcome, ${data.name}!`);
             localStorage.setItem("user", JSON.stringify(response.token));
             navigate("/");
           },
