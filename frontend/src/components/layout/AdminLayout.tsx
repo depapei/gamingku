@@ -18,12 +18,12 @@ export const AdminLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const userInfo = jwtDecode<Token>(JSON.parse(localStorage.getItem("user")));
-  const admin = userInfo.user_role === "admin";
+  const token = JSON.parse(localStorage.getItem("user"));
+  const userInfo = token ? jwtDecode<Token>(token) : {};
+  const admin = userInfo ? userInfo.user_role === "admin" : false;
   useEffect(() => {
     if (!admin) {
       navigate("/");
-      console.log(userInfo);
       message.error("Please login as admin first!");
     }
   }, []);
