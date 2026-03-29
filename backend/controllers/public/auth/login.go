@@ -28,7 +28,7 @@ func Login(c *gin.Context) {
 	if err != nil {
 		var message string
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			message = "User not found"
+			message = "Email not found"
 		} else if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
 			message = "Wrong password!"
 		}
