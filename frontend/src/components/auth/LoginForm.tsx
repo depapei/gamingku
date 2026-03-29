@@ -29,7 +29,16 @@ export const LoginForm = () => {
       },
       onError: (err: AxiosError) => {
         const response: ErrorResponse = err.response.data;
-        message.error(response.message);
+        if (response.message === "Wrong password!") {
+          setError("password", { message: response.message });
+        } else if (response.message === "Email not found") {
+          setError("email", { message: response.message });
+        } else {
+          // if (response.message typeof ErrorField){
+
+          // }
+          message.error(response.message);
+        }
       },
     });
   };
@@ -37,6 +46,7 @@ export const LoginForm = () => {
   const {
     control,
     handleSubmit,
+    setError,
     formState: { errors },
   } = useForm<FormData>({
     resolver: yupResolver(schema) as any,
