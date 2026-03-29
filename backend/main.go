@@ -4,6 +4,7 @@ import (
 	AdminCategoryController "backend/controllers/admin/category"
 	AdminOrderController "backend/controllers/admin/order"
 	AdminProductController "backend/controllers/admin/product"
+	AdminUserController "backend/controllers/admin/user"
 	PubAuthController "backend/controllers/public/auth"
 	PubCategoryController "backend/controllers/public/category"
 	PubOrderController "backend/controllers/public/order"
@@ -75,6 +76,10 @@ func main() {
 		order := admin.Group("/order")
 		{
 			order.GET("/", AdminOrderController.GetOrders)
+		}
+		user := admin.Group("/user")
+		{
+			user.GET("/", AdminUserController.GetUsers)
 		}
 	}
 
