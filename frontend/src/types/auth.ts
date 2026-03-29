@@ -10,8 +10,13 @@ export interface Register {
   avatar?: string;
 }
 
+export type ErrorField = {
+  field: string;
+  message: string;
+};
+
 export type ErrorResponse = {
-  message?: string;
+  message?: ErrorField[] | string;
   success?: boolean;
 };
 
