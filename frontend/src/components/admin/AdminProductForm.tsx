@@ -125,6 +125,12 @@ const STEP_FIELDS = [
   [],
 ] as const;
 
+/**
+ * Zeroes AntD's 24px item margin so the section `space-y-5` rhythm
+ * owns vertical spacing instead of stacking with it.
+ */
+const NO_MB = { marginBottom: 0 } as const;
+
 /** Maps admin product detail to form defaults. */
 const toDefaults = (
   initialData?: Partial<AdminProduct> | null,
@@ -190,6 +196,7 @@ const VariantItem = ({ nestIndex, control, errors, onRemove, disabled }: Variant
             label="Variant name"
             validateStatus={variantError?.name ? "error" : ""}
             help={variantError?.name?.message}
+            style={NO_MB}
           >
             <Input {...field} placeholder="Color" disabled={disabled} />
           </Form.Item>
@@ -363,6 +370,28 @@ export const AdminProductForm = ({
 
   const handleBack = () => setStep((s) => Math.max(s - 1, 0));
 
+  /**
+   * Jumps to a step marker. Backward jumps keep entered data;
+   * forward jumps validate each skipped step and stop on the first failure.
+   */
+  const handleGoto = async (idx: number) => {
+    if (idx === step || navigating || submitting) return;
+    if (idx < step) {
+      setStep(idx);
+      return;
+    }
+    setNavigating(true);
+    try {
+      for (let s = step; s < idx; s += 1) {
+        const fields = STEP_FIELDS[s] as unknown as Parameters<typeof trigger>[0];
+        if (fields.length > 0 && !(await trigger(fields))) return;
+      }
+      setStep(idx);
+    } finally {
+      setNavigating(false);
+    }
+  };
+
   const review = getValues();
 
   return (
@@ -380,7 +409,7 @@ export const AdminProductForm = ({
             </div>
             <WizardStepper
               current={step}
-              onChange={(idx) => setStep(idx)}
+              onChange={handleGoto}
               steps={[
                 { title: "Basics", description: "Name and shelf", icon: <Package size={14} /> },
                 { title: "Details", description: "Images and specs", icon: <FileText size={14} /> },
@@ -431,12 +460,12 @@ export const AdminProductForm = ({
             className="space-y-6"
           >
             {step === 0 && (
-              <section className="space-y-4">
+              <section className="space-y-5">
                 <Controller
                   name="name"
                   control={control}
                   render={({ field }) => (
-                    <Form.Item label="Product name" validateStatus={errors.name ? "error" : ""} help={errors.name?.message}>
+                    <Form.Item label="Product name" validateStatus={errors.name ? "error" : ""} help={errors.name?.message} style={NO_MB}>
                       <Input {...field} placeholder="Pro mechanical keyboard X1" disabled={submitting} />
                     </Form.Item>
                   )}
@@ -448,9 +477,15 @@ export const AdminProductForm = ({
                     <Form.Item
                       label="Slug"
                       validateStatus={errors.slug ? "error" : ""}
-                      help={isEdit ? "Slug stays fixed so saved links keep working." : errors.slug?.message}
+                      help={
+                        errors.slug?.message ??
+                        (isEdit
+                          ? "Slug stays fixed so saved links keep working."
+                          : "Auto-generated from the name.")
+                      }
+                      style={NO_MB}
                     >
-                      <Input {...field} placeholder="pro-mechanical-keyboard-x1" disabled />
+                      <Input {...field} placeholder="pro-mechanical-keyboard-x1" readOnly />
                     </Form.Item>
                   )}
                 />
@@ -459,7 +494,7 @@ export const AdminProductForm = ({
                     name="categoryId"
                     control={control}
                     render={({ field }) => (
-                      <Form.Item label="Category" validateStatus={errors.categoryId ? "error" : ""} help={errors.categoryId?.message}>
+                      <Form.Item label="Category" validateStatus={errors.categoryId ? "error" : ""} help={errors.categoryId?.message} style={NO_MB}>
                         <Select
                           value={field.value || undefined}
                           onChange={field.onChange}
@@ -477,7 +512,7 @@ export const AdminProductForm = ({
                     name="featured"
                     control={control}
                     render={({ field }) => (
-                      <Form.Item label="Placement">
+                      <Form.Item label="Placement" style={NO_MB}>
                         <div className="flex h-8 items-center gap-2">
                           <Checkbox
                             checked={!!field.value}
@@ -495,12 +530,12 @@ export const AdminProductForm = ({
             )}
 
             {step === 1 && (
-              <section className="space-y-6">
+              <section className="space-y-5">
                 <Controller
                   name="description"
                   control={control}
                   render={({ field }) => (
-                    <Form.Item label="Description" validateStatus={errors.description ? "error" : ""} help={errors.description?.message}>
+                    <Form.Item label="Description" validateStatus={errors.description ? "error" : ""} help={errors.description?.message} style={NO_MB}>
                       <Input.TextArea {...field} rows={4} placeholder="Switch type, layout, what is in the box" disabled={submitting} />
                     </Form.Item>
                   )}
@@ -579,13 +614,13 @@ export const AdminProductForm = ({
             )}
 
             {step === 2 && (
-              <section className="space-y-6">
+              <section className="space-y-5">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                   <Controller
                     name="price"
                     control={control}
                     render={({ field }) => (
-                      <Form.Item label="Price" validateStatus={errors.price ? "error" : ""} help={errors.price?.message}>
+                      <Form.Item label="Price" validateStatus={errors.price ? "error" : ""} help={errors.price?.message} style={NO_MB}>
                         <InputNumber value={field.value} onChange={field.onChange} onBlur={field.onBlur} prefix="Rp" style={{ width: "100%" }} min={0} disabled={submitting} />
                       </Form.Item>
                     )}
@@ -594,7 +629,7 @@ export const AdminProductForm = ({
                     name="discountPrice"
                     control={control}
                     render={({ field }) => (
-                      <Form.Item label="Discount price" validateStatus={errors.discountPrice ? "error" : ""} help={errors.discountPrice?.message}>
+                      <Form.Item label="Discount price" validateStatus={errors.discountPrice ? "error" : ""} help={errors.discountPrice?.message} style={NO_MB}>
                         <InputNumber value={field.value ?? undefined} onChange={field.onChange} onBlur={field.onBlur} prefix="Rp" style={{ width: "100%" }} min={0} disabled={submitting} />
                       </Form.Item>
                     )}
@@ -603,7 +638,7 @@ export const AdminProductForm = ({
                     name="stock"
                     control={control}
                     render={({ field }) => (
-                      <Form.Item label="Stock" validateStatus={errors.stock ? "error" : ""} help={errors.stock?.message}>
+                      <Form.Item label="Stock" validateStatus={errors.stock ? "error" : ""} help={errors.stock?.message} style={NO_MB}>
                         <InputNumber value={field.value} onChange={field.onChange} onBlur={field.onBlur} style={{ width: "100%" }} min={0} precision={0} disabled={submitting} />
                       </Form.Item>
                     )}

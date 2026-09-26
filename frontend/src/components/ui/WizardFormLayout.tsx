@@ -19,13 +19,15 @@ export interface WizardFormLayoutProps {
  */
 export const WizardFormLayout = ({ sidebar, children, footer }: WizardFormLayoutProps) => {
   return (
-    <div className="flex flex-col overflow-hidden md:flex-row">
-      <aside className="h-fit bg-[#14181d] px-5 py-6 text-[#e8ece9] shadow-lg md:w-60">
+    <div className="flex flex-col overflow-hidden md:flex-row md:items-stretch">
+      <aside className="bg-[#14181d] px-5 py-6 text-[#e8ece9] md:w-60 md:shrink-0">
         {sidebar}
       </aside>
       <div className="flex min-w-0 flex-1 flex-col bg-[#ffffff]">
-        <div className="min-h-105 px-6 py-6">{children}</div>
-        <div className="border-t border-[#d5dbd6] bg-[#ffffff] px-6 py-4">{footer}</div>
+        <div className="min-h-[420px] px-6 py-6">{children}</div>
+        <div className="sticky bottom-0 border-t border-[#d5dbd6] bg-[#ffffff] px-6 py-4">
+          {footer}
+        </div>
       </div>
     </div>
   );

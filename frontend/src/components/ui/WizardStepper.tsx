@@ -17,7 +17,7 @@ export interface WizardStepperProps {
   steps: WizardStepDef[];
   /** Zero-based index of the active step. */
   current: number;
-  /** Called when a completed step marker is clicked. */
+  /** Called when any step marker is clicked; the caller validates forward jumps. */
   onChange?: (index: number) => void;
   /** Layout direction. Vertical is used for the modal rail. */
   direction?: "vertical" | "horizontal";
@@ -36,7 +36,7 @@ export const WizardStepper = ({ steps, current, onChange, direction = "vertical"
       direction={direction}
       size="small"
       onChange={(idx) => {
-        if (idx < current) onChange?.(idx);
+        if (idx !== current) onChange?.(idx);
       }}
       className="wizard-stepper"
       items={steps.map((s) => ({
