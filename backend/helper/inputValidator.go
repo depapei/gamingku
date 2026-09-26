@@ -15,6 +15,7 @@ type ErrorMessage struct {
 	Value   interface{} `json:"value,omitempty"`
 }
 
+// GetErrorMessage maps a validator tag to a human-readable message.
 func GetErrorMessage(fe validator.FieldError) string {
 	log.Println(fe.Tag())
 	switch fe.Tag() {
@@ -24,6 +25,14 @@ func GetErrorMessage(fe validator.FieldError) string {
 		return "Format should be email!"
 	case "min":
 		return "Minimum value length is 3 characters!"
+	case "gt":
+		return "Value must be greater than 0!"
+	case "gte":
+		return "Value must be zero or greater!"
+	case "oneof", "oneofci":
+		return "Invalid value!"
+	case "url":
+		return "Format should be a valid URL!"
 	default:
 		return "Unknown error"
 	}

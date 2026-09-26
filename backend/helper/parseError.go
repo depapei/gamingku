@@ -67,6 +67,33 @@ func StatusForCategoryError(err error) int {
 	}
 }
 
+// StatusForUserError maps known user sentinel errors to HTTP codes.
+func StatusForUserError(err error) int {
+	if err == nil {
+		return 200
+	}
+	lowered := strings.ToLower(err.Error())
+	switch {
+	case strings.Contains(lowered, "user not found"):
+		return 404
+	case strings.Contains(lowered, "email already exists"),
+		strings.Contains(lowered, "duplicate key"),
+		strings.Contains(lowered, "duplicate entry"):
+		return 409
+	case strings.Contains(lowered, "insufficient privilege"),
+		strings.Contains(lowered, "last active superadmin"),
+		strings.Contains(lowered, "cannot modify your own"):
+		return 403
+	case strings.Contains(lowered, "invalid"),
+		strings.Contains(lowered, "does not match"),
+		strings.Contains(lowered, "are required"),
+		strings.Contains(lowered, "not found"):
+		return 400
+	default:
+		return 500
+	}
+}
+
 // StatusForProductError maps known product sentinel errors to HTTP codes.
 func StatusForProductError(err error) int {
 	if err == nil {

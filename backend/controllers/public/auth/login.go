@@ -45,7 +45,7 @@ func Login(c *gin.Context) {
 		if errors.Is(err, PubAuthService.ErrInactive) {
 			c.JSON(http.StatusForbidden, gin.H{
 				"success": false,
-				"message": "User is inactive",
+				"message": "Account is deactivated",
 			})
 			return
 		}

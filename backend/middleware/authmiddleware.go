@@ -46,14 +46,14 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		if claims.UserRole != "admin" {
-			log.Println(claims.UserRole)
-			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"success": false,
-				"message": "Access denied",
-			})
-			return
-		}
+	if claims.UserRole != "admin" && claims.UserRole != "superadmin" {
+		log.Println(claims.UserRole)
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+			"success": false,
+			"message": "Access denied",
+		})
+		return
+	}
 
 		c.Set("UserID", claims.UserID)
 		c.Set("UserEmail", claims.UserEmail)

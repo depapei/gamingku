@@ -84,6 +84,12 @@ func main() {
 		user := admin.Group("/user")
 		{
 			user.GET("/", AdminUserController.GetUsers)
+			user.GET("/:id", AdminUserController.GetUserByID)
+			user.POST("/", AdminUserController.CreateUser)
+			user.PUT("/:id", AdminUserController.UpdateUser)
+			user.PUT("/:id/status", AdminUserController.UpdateUserStatus)
+			user.PUT("/:id/password", AdminUserController.ResetUserPassword)
+			user.DELETE("/:id", AdminUserController.DeleteUser)
 		}
 	}
 

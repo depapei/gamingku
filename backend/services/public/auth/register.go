@@ -20,6 +20,7 @@ func Register(input auth.RegisterInput) (bool, error) {
 		Password: string(hashed),
 		Email:    input.Email,
 		Role:     "customer",
+		IsActive: true,
 	}
 
 	raw := DataAccess.DB
