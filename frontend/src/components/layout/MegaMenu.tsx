@@ -1,11 +1,9 @@
-import React, { useState, useEffect, useMemo } from "react";
+import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { categories } from "../../data/categories";
 import { useCategories } from "@/src/hooks/useCategories";
 
+/** Storefront mega menu grouping categories by parent. */
 export const MegaMenu = () => {
-  // Get main categories (those without parentId)
-  // const mainCategories = categories.filter((c) => !c.parentId);
   const { data, isSuccess, isLoading } = useCategories();
   const mainCategories = useMemo(() => {
     if (data) {
@@ -15,10 +13,9 @@ export const MegaMenu = () => {
   }, [data, isSuccess]);
 
   // State to track hovered main category
-  const [activeCategory, setActiveCategory] = useState(mainCategories[0]?.id);
+  const [activeCategory, setActiveCategory] = useState<number | undefined>(mainCategories[0]?.id);
 
   // Get subcategories for the active category
-  // const subCategories = categories.filter((c) => c.parentId === activeCategory);
   const subCategories = useMemo(() => {
     if (data) {
       const filteredData = data.filter((c) => c.parentId === activeCategory);

@@ -64,6 +64,8 @@ func main() {
 			product.GET("/", AdminProductController.GetProducts)
 			product.POST("/", AdminProductController.CreateProduct)
 			product.GET("/:slug", AdminProductController.GetDetail)
+			product.PUT("/:slug", AdminProductController.UpdateProduct)
+			product.DELETE("/:slug", AdminProductController.DeleteProduct)
 		}
 		category := admin.Group("/category")
 		{

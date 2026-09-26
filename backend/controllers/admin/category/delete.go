@@ -1,22 +1,22 @@
 package AdminCategoryController
 
 import (
-	"backend/helper"
-	AdminCategoryService "backend/services/admin/category"
 	"net/http"
+
+	AdminCategoryService "backend/services/admin/category"
 
 	"github.com/gin-gonic/gin"
 )
 
+// DeleteCategory handles DELETE /admin/category/:id with 404/409 semantics.
 func DeleteCategory(c *gin.Context) {
-	id := c.Param("id")
+	id, ok := parseCategoryID(c)
+	if !ok {
+		return
+	}
 
 	if err := AdminCategoryService.DeleteCategory(id); err != nil {
-		message := helper.ParseError(err)
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"message": message,
-		})
+		writeCategoryError(c, err)
 		return
 	}
 

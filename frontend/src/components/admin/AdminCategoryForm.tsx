@@ -1,60 +1,97 @@
-import { useForm, Controller } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useEffect } from "react";
 import * as yup from "yup";
-import { Form, Input, InputNumber, Switch, Button, Select } from "antd";
-import { useCategories } from "../../hooks/useCategories";
+import { Button, Form, Input, Select } from "antd";
+import { Category } from "../../types/category";
+import { slugify } from "../../utils/slug";
 
+/** Validation schema for the category form. Creator is server-derived. */
 const schema = yup
   .object({
     id: yup.number().optional(),
-    name: yup.string().required("Product name is required"),
-    slug: yup.string().required("Slug is required"),
-    parentId: yup.number().optional(),
-    image: yup.string().required("Url Image is required"),
+    name: yup.string().trim().min(2).required("Category name is required"),
+    slug: yup.string().trim().min(2).required("Slug is required"),
+    parentId: yup.number().nullable().optional().default(null),
+    image: yup.string().trim().url("Image must be a valid URL").required("Image URL is required"),
   })
   .required();
 
-type FormData = yup.InferType<typeof schema>;
+/** Form values submitted by the admin category form. */
+export type CategoryFormValues = yup.InferType<typeof schema>;
+
+/** Props for the admin category form. */
+export interface AdminCategoryFormProps {
+  /** Submit handler receiving validated values. */
+  onSubmit: (data: CategoryFormValues) => void;
+  /** Existing values when editing. */
+  initialData?: Partial<Category> | null;
+  /** Category options for the parent selector (provided by the caller). */
+  categories?: Category[];
+  /** Id excluded from parent options to prevent self-parenting. */
+  excludeId?: number;
+  /** Disables the submit button while a mutation is pending. */
+  submitting?: boolean;
+}
+
+/**
+ * Category create/edit form with auto-slug, validation and parent selection.
+ * @param props form props
+ * @returns category form element
+ */
 export const AdminCategoryForm = ({
   onSubmit,
   initialData,
-}: {
-  onSubmit: (data: FormData) => void;
-  initialData?: any;
-}) => {
-  const { data: categories, isSuccess: categoriesSuccess } = useCategories();
-
+  categories = [],
+  excludeId,
+  submitting = false,
+}: AdminCategoryFormProps) => {
   const {
-    getValues,
-    setValue,
     watch,
+    setValue,
     control,
     handleSubmit,
     formState: { errors },
-  } = useForm<FormData>({
+  } = useForm<CategoryFormValues>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: yupResolver(schema) as any,
-    defaultValues: initialData || {
-      name: "",
-      slug: "",
-      categoryId: 0,
-      image: "",
-      createdBy: 172,
+    defaultValues: {
+      id: initialData?.id,
+      name: initialData?.name ?? "",
+      slug: initialData?.slug ?? "",
+      parentId: initialData?.parentId ?? null,
+      image: initialData?.image ?? "",
     },
   });
 
+  const watchedName = watch("name");
+
   useEffect(() => {
-    const name: string = getValues("name");
-    const newSlug: string = name
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, "")
-      .trim()
-      .replace(/\s+/g, "-")
-      .replace(/-+/g, "-");
-    setValue("slug", newSlug);
-  }, [watch("name")]);
+    const subscription = watch((values, { name }) => {
+      if (name === "name") {
+        setValue("slug", slugify(String(values.name ?? "")), {
+          shouldValidate: true,
+        });
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [watch, setValue]);
+
+  useEffect(() => {
+    if (!initialData?.slug) {
+      setValue("slug", slugify(String(watchedName ?? "")), {
+        shouldValidate: false,
+      });
+    }
+  }, [watchedName, initialData?.slug, setValue]);
+
+  const selfId = excludeId ?? initialData?.id;
+  const parentOptions = categories
+    .filter((cat) => !cat.parentId && cat.id !== selfId)
+    .map((parent) => ({
+      label: parent.name,
+      value: parent.id,
+    }));
 
   return (
     <Form layout="vertical" onFinish={handleSubmit(onSubmit)}>
@@ -67,13 +104,7 @@ export const AdminCategoryForm = ({
             validateStatus={errors.name ? "error" : ""}
             help={errors.name?.message}
           >
-            <Input
-              {...field}
-              onChange={(e) => {
-                const name = e.target.value.toUpperCase();
-                field.onChange(name);
-              }}
-            />
+            <Input {...field} placeholder="Keyboards" />
           </Form.Item>
         )}
       />
@@ -87,7 +118,7 @@ export const AdminCategoryForm = ({
             validateStatus={errors.slug ? "error" : ""}
             help={errors.slug?.message}
           >
-            <Input disabled {...field} />
+            <Input {...field} placeholder="keyboards" disabled={submitting} />
           </Form.Item>
         )}
       />
@@ -97,11 +128,11 @@ export const AdminCategoryForm = ({
         control={control}
         render={({ field }) => (
           <Form.Item
-            label="Image url"
-            validateStatus={errors.slug ? "error" : ""}
-            help={errors.slug?.message}
+            label="Image URL"
+            validateStatus={errors.image ? "error" : ""}
+            help={errors.image?.message}
           >
-            <Input {...field} />
+            <Input {...field} placeholder="https://..." disabled={submitting} />
           </Form.Item>
         )}
       />
@@ -109,41 +140,34 @@ export const AdminCategoryForm = ({
       <Controller
         name="parentId"
         control={control}
-        render={({ field }) => {
-          const defaultValue = 0;
-          const groupedOptions = categories
-            ?.filter((cat) => !cat.parentId)
-            .map((parent) => ({
-              label: `${parent.name}`,
-              value: parent.id,
-            }));
-
-          return (
-            <Form.Item
-              label="Parent category"
-              validateStatus={errors.parentId ? "error" : ""}
-              help={errors.parentId?.message}
-            >
-              <Select
-                {...field}
-                showSearch={{
-                  optionFilterProp: "label",
-                  filterSort: (optionA, optionB) =>
-                    (optionA?.label ?? "")
-                      .toLowerCase()
-                      .localeCompare((optionB?.label ?? "").toLowerCase()),
-                }}
-                allowClear={true}
-                className="w-full"
-                options={groupedOptions}
-              />
-            </Form.Item>
-          );
-        }}
+        render={({ field }) => (
+          <Form.Item
+            label="Parent category"
+            validateStatus={errors.parentId ? "error" : ""}
+            help={errors.parentId?.message}
+            extra="Leave empty for a top-level category."
+          >
+            <Select
+              value={field.value ?? null}
+              onChange={(value) => field.onChange(value ?? null)}
+              onBlur={field.onBlur}
+              showSearch={{ optionFilterProp: "label" }}
+              allowClear
+              placeholder="No parent (top-level)"
+              className="w-full"
+              options={parentOptions}
+            />
+          </Form.Item>
+        )}
       />
 
       <Form.Item>
-        <Button type="primary" htmlType="submit" className="bg-zinc-900">
+        <Button
+          type="primary"
+          htmlType="submit"
+          loading={submitting}
+          className="bg-zinc-900"
+        >
           Save Category
         </Button>
       </Form.Item>

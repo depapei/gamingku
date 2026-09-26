@@ -4,71 +4,100 @@ import (
 	DataAccess "backend/db"
 	Product "backend/helper/type/product"
 	"backend/model"
-	"strconv"
+	"strings"
 
+	"github.com/lib/pq"
 	"gorm.io/gorm"
 )
 
-func GetProducts(category string, search string, sortBy string, sort string, limit string) ([]Product.ResIndexProduct, error) {
+// sortColumnAllowlist maps public sort keys to safe DB columns.
+var sortColumnAllowlist = map[string]string{
+	"name":       "products.name",
+	"price":      "products.price",
+	"stock":      "products.stock",
+	"createdAt":  "products.created_at",
+	"created_at": "products.created_at",
+	"updatedAt":  "products.updated_at",
+	"updated_at": "products.updated_at",
+}
+
+// GetProducts returns a paginated, searchable, safely-sorted admin product list.
+func GetProducts(params Product.ProductListParams) (Product.PaginatedProductResponse, error) {
+	page := params.Page
+	if page <= 0 {
+		page = 1
+	}
+	limit := params.Limit
+	if limit <= 0 {
+		limit = 20
+	}
+	if limit > 50 {
+		limit = 50
+	}
+
+	base := DataAccess.DB.Model(&model.Product{})
+	if trimmed := strings.TrimSpace(params.Category); trimmed != "" {
+		base = base.Where(`category_id = ? OR category_id IN (SELECT id FROM categories WHERE parent_id = ?)`, trimmed, trimmed)
+	}
+	if trimmed := strings.TrimSpace(params.Search); trimmed != "" {
+		pattern := "%" + trimmed + "%"
+		base = base.Where("LOWER(products.name) LIKE LOWER(?)", pattern)
+	}
+
+	var total int64
+	if err := base.Count(&total).Error; err != nil {
+		return Product.PaginatedProductResponse{}, err
+	}
+
+	column, ok := sortColumnAllowlist[params.SortBy]
+	if !ok {
+		if strings.EqualFold(params.SortBy, "arrival") {
+			column = "products.created_at"
+		} else {
+			column = "products.name"
+		}
+	}
+	direction := "ASC"
+	if strings.EqualFold(params.Sort, "desc") {
+		direction = "DESC"
+	}
+
 	var products []model.Product
-	var response []Product.ResIndexProduct
-	raw := DataAccess.DB.
+	err := base.
 		Select("id", "name", "price", "discount_price", "stock", "category_id", "featured", "slug", "images").
 		Preload("Category", func(db *gorm.DB) *gorm.DB {
 			return db.Select("id", "name", "parent_id")
-		})
-
-	if len(category) > 0 {
-		raw = raw.Where(`category_id = ? OR category_id IN (SELECT id FROM categories WHERE parent_id = ?)`, category, category)
+		}).
+		Order(column + " " + direction).
+		Limit(limit).
+		Offset((page - 1) * limit).
+		Find(&products).Error
+	if err != nil {
+		return Product.PaginatedProductResponse{}, err
 	}
 
-	if len(search) > 0 {
-		searchPattern := "%" + search + "%"
-		raw = raw.Where("LOWER(name) LIKE LOWER(?)", searchPattern)
-	}
-
-	if len(sortBy) > 0 && len(sort) > 0 {
-		switch sortBy {
-		case "arrival":
-			raw = raw.Order("created_at ASC")
-		default:
-			sortByPattern := sortBy + " " + sort
-			raw = raw.Order(sortByPattern)
-		}
-	} else {
-		raw = raw.Order("name ASC")
-	}
-
-	if len(limit) > 0 {
-		intLimit, err := strconv.ParseInt(limit, 0, 64)
-		if err != nil {
-			return response, err
-		}
-		if intLimit >= 50 {
-			raw = raw.Limit(50)
-		} else {
-			raw = raw.Limit(int(intLimit))
-		}
-	} else {
-		raw = raw.Limit(20)
-	}
-
-	err := raw.Find(&products).Error
-
-	// mapping response
+	data := make([]Product.ResIndexProduct, 0, len(products))
 	for _, product := range products {
-		response = append(response, Product.ResIndexProduct{
+		product := product
+		categoryID := product.CategoryId
+		data = append(data, Product.ResIndexProduct{
 			ID:            product.ID,
 			Name:          product.Name,
 			Slug:          product.Slug,
 			Price:         product.Price,
 			DiscountPrice: product.DiscountPrice,
 			Stock:         product.Stock,
-			Images:        product.Images,
+			Images:        pq.StringArray(product.Images),
+			CategoryId:    &categoryID,
 			Category:      &product.Category.Name,
 			Featured:      product.Featured,
 		})
 	}
 
-	return response, err
+	return Product.PaginatedProductResponse{
+		Data:  data,
+		Total: total,
+		Page:  page,
+		Limit: limit,
+	}, nil
 }

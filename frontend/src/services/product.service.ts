@@ -1,62 +1,39 @@
-import { Product } from "../types/product";
-import { products } from "../data/products";
-import { categories } from "../data/categories";
 import { api } from "../lib/axios";
-import { promises } from "dns";
+import {
+  AdminProduct,
+  AdminProductListParams,
+  AdminProductListResponse,
+  CreateProductInput,
+  Product,
+  ProductMutationResponse,
+  UpdateProductInput,
+} from "../types/product";
 
-// Mock service simulating API calls
+/** Query options for the product list endpoint. */
+export interface ProductListParams {
+  category?: string;
+  search?: string;
+  sort?: string;
+}
+
+/** Encodes a product slug for URL interpolation. */
+const toSlug = (slug: string): string => encodeURIComponent(slug);
+
+/** Client for public and admin product endpoints. */
 export const productService = {
-  getProducts: async (params?: {
-    category?: string;
-    search?: string;
-    sort?: string;
-  }): Promise<Product[]> => {
-    // Simulate API delay
-    // await new Promise(resolve => setTimeout(resolve, 500));
-
-    // let param;
-    // if (params) {
-    //   if (params.search.length > 0) {
-    //     param = `?search=${params.search}`;
-    //   } else {
-    //     param = `?`;
-    //   }
-    //   if (params.sort) {
-    //     switch (params.sort) {
-    //       case "price-asc":
-    //         param = param + `&sortBy=price&sort=asc`;
-    //         break;
-    //       case "price-desc":
-    //         param = param + `&sortBy=price&sort=desc`;
-    //         break;
-    //       case "newest":
-    //         param = param + `&sortBy=created_at&sort=asc`;
-    //         break;
-    //       case "best-selling":
-    //         param = param + `&sortBy=reviewCount&sort=asc`;
-    //         break;
-    //     }
-    //   }
-    // }
-
+  /**
+   * Fetches products and applies optional category, search and sort filters.
+   * @param params optional category/search/sort options
+   * @returns filtered products
+   */
+  getProducts: async (params?: ProductListParams): Promise<Product[]> => {
     const { data } = await api.get(`/product/`);
-    let result = [...data.data];
+    let result = [...(data.data as Product[])];
 
     if (params?.category) {
-      // Find the category and its subcategories
-      const targetCategory = categories.find(
-        (c) => c.id === parseInt(params.category) || c.slug === params.category,
+      result = result.filter(
+        (p) => String(p.categoryId) === String(params.category),
       );
-      if (targetCategory) {
-        const subCategoryIds = categories
-          .filter((c) => c.parentId === targetCategory.id)
-          .map((c) => c.id);
-
-        const validCategoryIds = [targetCategory.id, ...subCategoryIds];
-        result = result.filter((p) => validCategoryIds.includes(p.categoryId));
-      } else {
-        result = result.filter((p) => p.categoryId === params.category);
-      }
     }
 
     if (params?.search) {
@@ -83,7 +60,6 @@ export const productService = {
           );
           break;
         case "newest":
-          // Mock sorting by newest (assuming id represents order for now)
           result.reverse();
           break;
         case "best-selling":
@@ -95,15 +71,97 @@ export const productService = {
     return result;
   },
 
+  /**
+   * Fetches a single product by slug.
+   * @param slug product slug
+   * @returns product detail
+   */
   getProductBySlug: async (slug: string): Promise<Product | undefined> => {
-    // await new Promise((resolve) => setTimeout(resolve, 300));
-    const { data } = await api(`/product/${slug}`);
-    return data.data;
+    const { data } = await api(`/product/${toSlug(slug)}`);
+    return data.data as Product | undefined;
   },
 
+  /**
+   * Fetches featured products for the homepage.
+   * @returns featured products
+   */
   getFeaturedProducts: async (): Promise<Product[]> => {
-    await new Promise((resolve) => setTimeout(resolve, 300));
     const { data } = await api.get(`/product/?featured=ea`);
-    return data.data;
+    return data.data as Product[];
+  },
+
+  /**
+   * Fetches the paginated admin product list with server search/sort.
+   * @param params search, sort and pagination options
+   * @returns paginated products with total/page/limit
+   */
+  getAdminProducts: async (
+    params?: AdminProductListParams,
+  ): Promise<AdminProductListResponse> => {
+    const { data } = await api.get("/admin/product/", {
+      params: {
+        category: params?.category || undefined,
+        search: params?.search || undefined,
+        sortBy: params?.sortBy || undefined,
+        sort: params?.sort || undefined,
+        page: params?.page,
+        limit: params?.limit,
+      },
+    });
+    return {
+      data: (data.data ?? []) as AdminProduct[],
+      total: Number(data.total ?? (data.data ?? []).length),
+      page: Number(data.page ?? params?.page ?? 1),
+      limit: Number(data.limit ?? params?.limit ?? 10),
+    };
+  },
+
+  /**
+   * Fetches a single admin product including variants and specifications.
+   * @param slug product slug
+   * @returns product detail
+   */
+  getAdminProductBySlug: async (slug: string): Promise<AdminProduct> => {
+    const { data } = await api.get(`/admin/product/${toSlug(slug)}`);
+    return data.data as AdminProduct;
+  },
+
+  /**
+   * Creates a product. The backend derives the creator from JWT when omitted.
+   * @param payload create payload
+   * @returns success envelope
+   */
+  createProduct: async (
+    payload: CreateProductInput,
+  ): Promise<ProductMutationResponse> => {
+    const { data } = await api.post("/admin/product/", payload);
+    return data as ProductMutationResponse;
+  },
+
+  /**
+   * Updates a product by route slug.
+   * @param payload update payload
+   * @param slug route slug (source of truth)
+   * @returns success envelope
+   */
+  updateProduct: async (
+    payload: UpdateProductInput,
+    slug: string,
+  ): Promise<ProductMutationResponse> => {
+    const { data } = await api.put(`/admin/product/${toSlug(slug)}`, {
+      ...payload,
+      slug,
+    });
+    return data as ProductMutationResponse;
+  },
+
+  /**
+   * Deletes a product by slug.
+   * @param slug product slug
+   * @returns success envelope
+   */
+  deleteProduct: async (slug: string): Promise<ProductMutationResponse> => {
+    const { data } = await api.delete(`/admin/product/${toSlug(slug)}`);
+    return data as ProductMutationResponse;
   },
 };

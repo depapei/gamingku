@@ -2,5 +2,6 @@
   "tailwindCSS.lint.suggestCanonicalClasses": "warning",
   "editor.codeActionsOnSave": {
     "source.fixAll.tailwind": "explicit"
-  }
+  },
+  "js/ts.tsdk.path": "node_modules\\typescript\\lib"
 }

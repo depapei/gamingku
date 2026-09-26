@@ -1,18 +1,47 @@
 import axios from "axios";
 
-// In a real app, this would point to your backend API
-// For this mock setup, we'll use an interceptor to simulate API calls
+/** Base URL for the backend API, overridable via VITE_API_URL. */
+const baseURL =
+  (import.meta as unknown as { env?: Record<string, string | undefined> }).env
+    ?.VITE_API_URL ?? "http://localhost:8080";
+
+/** Shared Axios instance for all backend calls. */
 export const api = axios.create({
-  baseURL: "http://localhost:8080",
+  baseURL,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// Mock interceptor to simulate network delay
-api.interceptors.request.use(async (config) => {
-  // Simulate network delay
-  config.headers.Authorization = `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX3JvbGUiOiJhZG1pbiIsInVzZXJfZW1haWwiOiJyYW5nZ2FAZGV2LmNvbSIsImlzcyI6ImdhbWluZ2t1LWF1dGhlbnRpY2F0aW9uLXN5c3RlbSIsImV4cCI6MTc3NDUwNDg2MiwiaWF0IjoxNzc0NDk3NjYyfQ.FiXwKmi7q06NzTlgpicbc5mmAlLi-iG76WqXMIwF1Pw`;
-  await new Promise((resolve) => setTimeout(resolve, 500));
+/**
+ * Reads the stored JWT from localStorage.
+ * Login persists the raw token string (JSON-encoded) under the "user" key.
+ * @returns bearer token or null when logged out
+ */
+export const getStoredToken = (): string | null => {
+  try {
+    const raw = localStorage.getItem("user");
+    if (!raw) return null;
+    const parsed: unknown = JSON.parse(raw);
+    if (typeof parsed === "string" && parsed.length > 0) return parsed;
+    if (
+      parsed !== null &&
+      typeof parsed === "object" &&
+      "token" in parsed &&
+      typeof (parsed as { token: unknown }).token === "string"
+    ) {
+      return (parsed as { token: string }).token;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+};
+
+api.interceptors.request.use((config) => {
+  const token = getStoredToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
   return config;
 });

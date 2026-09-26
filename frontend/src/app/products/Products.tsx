@@ -24,7 +24,7 @@ export const Products = () => {
     if (slug && categories) {
       const category = categories.find((c) => c.slug === slug);
       if (category) {
-        setCategoryFilter(category.id);
+        setCategoryFilter(String(category.id));
       }
     } else if (!slug) {
       setCategoryFilter(undefined);
@@ -37,17 +37,13 @@ export const Products = () => {
     sort: sortOption,
   });
 
-  useEffect(() => {
-    console.log(products);
-  }, [products]);
-
   const navigate = useNavigate();
 
   const handleCategoryChange = (val: string) => {
     if (val === "all") {
       navigate("/products");
     } else {
-      const category = categories?.find((c) => c.id === val);
+      const category = categories?.find((c) => String(c.id) === val);
       if (category) {
         navigate(`/category/${category.slug}`);
       }
@@ -128,8 +124,8 @@ export const Products = () => {
                   .map((cat) => (
                     <li key={cat.id}>
                       <button
-                        onClick={() => handleCategoryChange(cat.id)}
-                        className={`text-sm ${categoryFilter === cat.id ? "text-zinc-900 font-medium" : "text-zinc-500 hover:text-zinc-900"}`}
+                        onClick={() => handleCategoryChange(String(cat.id))}
+                        className={`text-sm ${categoryFilter === String(cat.id) ? "text-zinc-900 font-medium" : "text-zinc-500 hover:text-zinc-900"}`}
                       >
                         {cat.name}
                       </button>
@@ -140,8 +136,8 @@ export const Products = () => {
                           .map((sub) => (
                             <li key={sub.id}>
                               <button
-                                onClick={() => handleCategoryChange(sub.id)}
-                                className={`text-sm ${categoryFilter === sub.id ? "text-zinc-900 font-medium" : "text-zinc-500 hover:text-zinc-900"}`}
+                                onClick={() => handleCategoryChange(String(sub.id))}
+                                className={`text-sm ${categoryFilter === String(sub.id) ? "text-zinc-900 font-medium" : "text-zinc-500 hover:text-zinc-900"}`}
                               >
                                 {sub.name}
                               </button>
@@ -239,10 +235,10 @@ export const Products = () => {
                 <li key={cat.id}>
                   <button
                     onClick={() => {
-                      handleCategoryChange(cat.id);
+                      handleCategoryChange(String(cat.id));
                       setIsMobileFiltersOpen(false);
                     }}
-                    className={`text-sm ${categoryFilter === cat.id ? "text-zinc-900 font-medium" : "text-zinc-500"}`}
+                    className={`text-sm ${categoryFilter === String(cat.id) ? "text-zinc-900 font-medium" : "text-zinc-500"}`}
                   >
                     {cat.name}
                   </button>
@@ -254,10 +250,10 @@ export const Products = () => {
                         <li key={sub.id}>
                           <button
                             onClick={() => {
-                              handleCategoryChange(sub.id);
+                              handleCategoryChange(String(sub.id));
                               setIsMobileFiltersOpen(false);
                             }}
-                            className={`text-sm ${categoryFilter === sub.id ? "text-zinc-900 font-medium" : "text-zinc-500 hover:text-zinc-900"}`}
+                            className={`text-sm ${categoryFilter === String(sub.id) ? "text-zinc-900 font-medium" : "text-zinc-500 hover:text-zinc-900"}`}
                           >
                             {sub.name}
                           </button>

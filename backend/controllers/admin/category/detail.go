@@ -1,27 +1,28 @@
 package AdminCategoryController
 
 import (
-	"backend/helper"
-	AdminCategoryService "backend/services/admin/category"
 	"net/http"
+
+	AdminCategoryService "backend/services/admin/category"
 
 	"github.com/gin-gonic/gin"
 )
 
-func GetDetail(c *gin.Context){
-	id := c.Param("id")
+// GetDetail handles GET /admin/category/:id including direct children.
+func GetDetail(c *gin.Context) {
+	id, ok := parseCategoryID(c)
+	if !ok {
+		return
+	}
 
-	data, err := AdminCategoryService.GetDetail(id); if err != nil {
-		message := helper.ParseError(err)
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"message": message,
-		})
+	data, err := AdminCategoryService.GetDetail(id)
+	if err != nil {
+		writeCategoryError(c, err)
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"data": data,
+		"data":    data,
 	})
 }

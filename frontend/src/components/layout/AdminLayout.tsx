@@ -18,7 +18,8 @@ export const AdminLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const token = JSON.parse(localStorage.getItem("user"));
+  const user = localStorage.getItem("user");
+  const token = JSON.parse(user ? user : "");
   const userInfo = token ? jwtDecode<Token>(token) : {};
   const admin = userInfo ? userInfo.user_role === "admin" : false;
   useEffect(() => {

@@ -2,3 +2,7 @@ frontend/.env
 backend/.env
 backend/*.sql
 backend/tmp/*
+Functional Specification Documents/*
+frontend/.vscode/settings.json
+agent prompts/*
+report/*

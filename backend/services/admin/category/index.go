@@ -2,51 +2,97 @@ package AdminCategoryService
 
 import (
 	DataAccess "backend/db"
+	Category "backend/helper/type/category"
+	UserInfo "backend/helper/type/user"
 	"backend/model"
+	"strings"
 )
 
-type ResCategory struct {
-	ID       uint     `json:"id"`
-	Image    string `json:"image"`
-	Name     string   `json:"name"`
-	ParentId *int `json:"parentId,omitempty"`
-	Childs []*CategoryChild `json:"childs,omitempty"`
+// sortColumnAllowlist maps public sort keys to safe DB columns.
+var sortColumnAllowlist = map[string]string{
+	"name":       "name",
+	"slug":       "slug",
+	"createdAt":  "created_at",
+	"created_at": "created_at",
+	"updatedAt":  "updated_at",
+	"updated_at": "updated_at",
 }
 
-type CategoryChild struct {
-	ID uint `json:"id"`
-	Name string `json:"name"`
-	Image string `json:"image"`
-}
+// GetCategories returns a paginated, searchable, safely-sorted category list.
+func GetCategories(params Category.CategoryListParams) (Category.PaginatedCategoryResponse, error) {
+	page := params.Page
+	if page <= 0 {
+		page = 1
+	}
+	limit := params.Limit
+	if limit <= 0 {
+		limit = 10
+	}
+	if limit > 100 {
+		limit = 100
+	}
 
-func GetCategories(search string, sortBy string, sort string) ([]ResCategory, error) {
+	base := DataAccess.DB.Model(&model.Category{})
+	if trimmed := strings.TrimSpace(params.Search); trimmed != "" {
+		pattern := "%" + trimmed + "%"
+		base = base.Where("LOWER(name) LIKE LOWER(?)", pattern)
+	}
+
+	var total int64
+	if err := base.Count(&total).Error; err != nil {
+		return Category.PaginatedCategoryResponse{}, err
+	}
+
+	column, ok := sortColumnAllowlist[params.SortBy]
+	if !ok {
+		column = "name"
+	}
+	direction := "ASC"
+	if strings.EqualFold(params.Sort, "desc") {
+		direction = "DESC"
+	}
 
 	var categories []model.Category
-
-	raw := DataAccess.DB
-
-	if len(search) > 0 {
-		searchPattern := "%" + search + "%"
-		raw = raw.Where("LOWER(name) LIKE LOWER(?)", searchPattern)
+	err := base.
+		Preload("CreatedBy").
+		Order(column + " " + direction).
+		Limit(limit).
+		Offset((page - 1) * limit).
+		Find(&categories).Error
+	if err != nil {
+		return Category.PaginatedCategoryResponse{}, err
 	}
 
-	if len(sortBy) > 0 {
-		sortByPattern := sortBy + " " + sort
-		raw = raw.Order(sortByPattern)
-	}
-
-	raw.Find(&categories)
-	err := raw.Error;
-
-	var response []ResCategory
+	data := make([]Category.CategoryResponse, 0, len(categories))
 	for _, cat := range categories {
-		response = append(response, ResCategory{
-			ID: cat.ID,
-			Image: cat.Image,
-			Name: cat.Name,
-			ParentId: cat.ParentId,
-		})
+		data = append(data, mapCategoryToResponse(cat))
 	}
 
-	return response, err
+	return Category.PaginatedCategoryResponse{
+		Data:  data,
+		Total: total,
+		Page:  page,
+		Limit: limit,
+	}, nil
+}
+
+// mapCategoryToResponse converts a model.Category to its shared response DTO.
+func mapCategoryToResponse(cat model.Category) Category.CategoryResponse {
+	return Category.CategoryResponse{
+		ID:          cat.ID,
+		Name:        cat.Name,
+		Slug:        cat.Slug,
+		Image:       cat.Image,
+		ParentId:    cat.ParentId,
+		CreatedById: cat.CreatedById,
+		CreatedBy: UserInfo.UserInfo{
+			Name:     cat.CreatedBy.Name,
+			Email:    cat.CreatedBy.Email,
+			Role:     cat.CreatedBy.Role,
+			IsActive: cat.CreatedBy.IsActive,
+			Avatar:   cat.CreatedBy.Avatar,
+		},
+		CreatedAt: cat.CreatedAt,
+		UpdatedAt: cat.UpdatedAt,
+	}
 }

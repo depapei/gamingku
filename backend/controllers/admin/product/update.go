@@ -9,10 +9,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// CreateProduct handles POST /admin/product/.
-// The creator is derived from the JWT identity; a client-sent createdBy is optional legacy input.
-func CreateProduct(c *gin.Context) {
-	var input Product.CreateProductInput
+// UpdateProduct handles PUT /admin/product/:slug. The route slug is the source
+// of truth; a mismatched body slug is rejected.
+func UpdateProduct(c *gin.Context) {
+	slug, ok := parseProductSlug(c)
+	if !ok {
+		return
+	}
+
+	var input Product.UpdateProductInput
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
@@ -24,13 +29,13 @@ func CreateProduct(c *gin.Context) {
 	creatorEmail, _ := c.Get("UserEmail")
 	email, _ := creatorEmail.(string)
 
-	if err := AdminProductService.CreateProduct(input, email); err != nil {
+	if err := AdminProductService.UpdateProduct(slug, input, email); err != nil {
 		writeProductError(c, err)
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
+	c.JSON(http.StatusOK, gin.H{
 		"success": true,
-		"message": "Product " + input.Name + " Successfully created!",
+		"message": "Product " + input.Name + " Successfully updated!",
 	})
 }

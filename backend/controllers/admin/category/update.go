@@ -9,24 +9,25 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// UpdateCategory handles PUT /admin/category/:id. The route id is the source
+// of truth and must match the body id when the body carries one.
 func UpdateCategory(c *gin.Context) {
-	var input Category.UpdateCategory
+	id, ok := parseCategoryID(c)
+	if !ok {
+		return
+	}
 
+	var input Category.UpdateCategoryInput
 	if err := c.ShouldBindJSON(&input); err != nil {
-		message := helper.Validate(err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"message": message,
+			"message": helper.Validate(err),
 		})
 		return
 	}
 
-	if  err := AdminCategoryService.UpdateCategory(input); err != nil {
-		message := helper.ParseError(err)
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"message": message,
-		})
+	if err := AdminCategoryService.UpdateCategory(id, input); err != nil {
+		writeCategoryError(c, err)
 		return
 	}
 

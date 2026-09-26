@@ -3,6 +3,8 @@ package PubProductService
 import (
 	DataAccess "backend/db"
 	"backend/model"
+
+	"github.com/lib/pq"
 )
 
 func GetDetail(slug string) (ResProduct, error) {
@@ -42,7 +44,7 @@ func GetDetail(slug string) (ResProduct, error) {
 		Price:          product.Price,
 		DiscountPrice:  product.DiscountPrice,
 		Stock:          product.Stock,
-		Images:         product.Images,
+		Images:         pq.StringArray(product.Images),
 		Rating:         int(product.Rating),
 		CategoryId:     product.CategoryId,
 		ReviewCount:    int(product.ReviewCount),

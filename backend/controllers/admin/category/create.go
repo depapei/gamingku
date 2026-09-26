@@ -9,24 +9,24 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// CreateCategory handles POST /admin/category/.
+// The creator is derived from the JWT identity; a client-sent createdBy is optional legacy input.
 func CreateCategory(c *gin.Context) {
-	var input Category.ResCategory
+	var input Category.CreateCategoryInput
 
 	if err := c.ShouldBindJSON(&input); err != nil {
-		message := helper.Validate(err)
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"message": message,
+			"message": helper.Validate(err),
 		})
 		return
 	}
 
-	if  err := AdminCategoryService.CreateCategory(input); err != nil {
-		message := helper.ParseError(err)
-		c.JSON(http.StatusBadRequest, gin.H{
-			"success": false,
-			"message": message,
-		})
+	creatorEmail, _ := c.Get("UserEmail")
+	email, _ := creatorEmail.(string)
+
+	if err := AdminCategoryService.CreateCategory(input, email); err != nil {
+		writeCategoryError(c, err)
 		return
 	}
 

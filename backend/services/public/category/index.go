@@ -2,32 +2,31 @@ package PubCategoryService
 
 import (
 	DataAccess "backend/db"
+	Category "backend/helper/type/category"
 	"backend/model"
 )
 
-type ResCategory struct {
-	ID       uint   `json:"id"`
-	Name     string `json:"name"`
-	Slug     string `json:"slug"`
-	ParentId *int `json:"parentId,omitempty"`
-	Image    string `json:"image"`
-}
-
-func GetCategories() ([]ResCategory, error) {
+// GetCategories returns the public read-only category list using the shared DTO.
+func GetCategories() ([]Category.CategoryResponse, error) {
 	var categories []model.Category
 
-	err := DataAccess.DB.Find(&categories).Error
+	if err := DataAccess.DB.Order("name ASC").Find(&categories).Error; err != nil {
+		return nil, err
+	}
 
-	var result []ResCategory
+	result := make([]Category.CategoryResponse, 0, len(categories))
 	for _, category := range categories {
-		result = append(result, ResCategory{
-			ID: category.ID,
-			Name: category.Name,
-			Slug: category.Slug,
-			ParentId: category.ParentId,
-			Image: category.Image,
+		result = append(result, Category.CategoryResponse{
+			ID:          category.ID,
+			Name:        category.Name,
+			Slug:        category.Slug,
+			Image:       category.Image,
+			ParentId:    category.ParentId,
+			CreatedById: category.CreatedById,
+			CreatedAt:   category.CreatedAt,
+			UpdatedAt:   category.UpdatedAt,
 		})
 	}
 
-	return result, err
+	return result, nil
 }

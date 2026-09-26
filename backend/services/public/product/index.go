@@ -105,7 +105,7 @@ func GetProducts(category string, search string, sortBy string, sort string, lim
 			Price:         product.Price,
 			DiscountPrice: product.DiscountPrice,
 			Stock:         product.Stock,
-			Images:        product.Images,
+			Images:        pq.StringArray(product.Images),
 			CategoryId:    product.CategoryId,
 			Featured:      product.Featured,
 		})

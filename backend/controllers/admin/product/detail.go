@@ -1,23 +1,22 @@
 package AdminProductController
 
 import (
-	"backend/helper"
 	AdminProductService "backend/services/admin/product"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
+// GetDetail handles GET /admin/product/:slug.
 func GetDetail(c *gin.Context) {
-	slug := c.Param("slug")
+	slug, ok := parseProductSlug(c)
+	if !ok {
+		return
+	}
 
 	response, err := AdminProductService.GetDetail(slug)
 	if err != nil {
-		message := helper.ParseError(err)
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"message": message,
-		})
+		writeProductError(c, err)
 		return
 	}
 
