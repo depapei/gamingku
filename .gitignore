@@ -1,5 +1,5 @@
-frontend/.env
-backend/.env
+frontend/.env*
+backend/.env*
 backend/*.sql
 backend/tmp/*
 Functional Specification Documents/*
