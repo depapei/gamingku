@@ -50,50 +50,50 @@ export const AdminDashboard = () => {
       
       <Row gutter={[24, 24]} className="mb-8">
         <Col xs={24} sm={12} lg={6}>
-          <Card bordered={false} className="shadow-sm">
+          <Card variant="outlined">
             <Statistic
               title="Total Revenue"
               value={totalRevenue}
               formatter={(value) => formatPrice(Number(value))}
-              valueStyle={{ color: '#18181b', fontWeight: 600 }}
+              valueStyle={{ color: '#1a1a1a', fontWeight: 600 }}
             />
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
-          <Card bordered={false} className="shadow-sm">
+          <Card variant="outlined">
             <Statistic
               title="Total Orders"
               value={totalOrders}
               prefix={<ShoppingOutlined />}
-              valueStyle={{ color: '#18181b', fontWeight: 600 }}
+              valueStyle={{ color: '#1a1a1a', fontWeight: 600 }}
             />
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
-          <Card bordered={false} className="shadow-sm">
+          <Card variant="outlined">
             <Statistic
               title="Active Products"
               value={totalProducts}
               prefix={<AppstoreOutlined />}
-              valueStyle={{ color: '#18181b', fontWeight: 600 }}
+              valueStyle={{ color: '#1a1a1a', fontWeight: 600 }}
             />
           </Card>
         </Col>
         <Col xs={24} sm={12} lg={6}>
-          <Card bordered={false} className="shadow-sm">
+          <Card variant="outlined">
             <Statistic
               title="Conversion Rate"
               value={3.4}
               precision={1}
               suffix="%"
               prefix={<RiseOutlined />}
-              valueStyle={{ color: '#10b981', fontWeight: 600 }}
+              valueStyle={{ color: '#1aae39', fontWeight: 600 }}
             />
           </Card>
         </Col>
       </Row>
 
-      <div className="bg-white p-6 rounded-lg shadow-sm">
+      <div className="bg-white p-6 rounded-xl border border-hairline">
         <h3 className="text-lg font-medium mb-4 text-zinc-800">Recent Orders</h3>
         <Table 
           dataSource={orders} 

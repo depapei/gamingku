@@ -197,7 +197,7 @@ export const MainLayout = () => {
                   <Badge
                     count={compareProducts.length}
                     size="small"
-                    color="#18181b"
+                    color="#5645d4"
                   >
                     <Scale className="w-5 h-5" />
                   </Badge>
@@ -207,7 +207,7 @@ export const MainLayout = () => {
                   to="/cart"
                   className="text-zinc-600 hover:text-zinc-900 transition-colors"
                 >
-                  <Badge count={totalItems} size="small" color="#18181b">
+                  <Badge count={totalItems} size="small" color="#5645d4">
                     <ShoppingCart className="w-5 h-5" />
                   </Badge>
                 </Link>

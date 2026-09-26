@@ -183,9 +183,9 @@ const VariantItem = ({ nestIndex, control, errors, onRemove, disabled }: Variant
   const variantError = errors?.variants?.[nestIndex];
 
   return (
-    <div className="rounded-lg border border-[#d5dbd6] bg-white p-4">
+    <div className="rounded-lg border border-hairline bg-white p-4">
       <div className="mb-3 flex items-center justify-between">
-        <span className="text-sm font-medium text-[#1a2128]">Variant {nestIndex + 1}</span>
+        <span className="text-sm font-medium text-ink">Variant {nestIndex + 1}</span>
         <Button type="text" danger size="small" icon={<DeleteOutlined />} onClick={onRemove} aria-label={`Remove variant ${nestIndex + 1}`} />
       </div>
       <Controller
@@ -541,7 +541,7 @@ export const AdminProductForm = ({
                   )}
                 />
                 <div>
-                  <p className="mb-2 text-sm font-medium text-[#1a2128]">Images</p>
+                  <p className="mb-2 text-sm font-medium text-ink">Images</p>
                   <div className="space-y-2">
                     {imageFields.map((img, idx) => (
                       <Space key={img.id} align="baseline" className="flex w-full">
@@ -567,9 +567,9 @@ export const AdminProductForm = ({
                   </Button>
                 </div>
                 <div>
-                  <p className="mb-2 text-sm font-medium text-[#1a2128]">Specifications</p>
+                  <p className="mb-2 text-sm font-medium text-ink">Specifications</p>
                   {specFields.length === 0 && (
-                    <p className="mb-3 text-xs leading-relaxed text-[#5b6660]">
+                    <p className="mb-3 text-xs leading-relaxed text-slate">
                       No specs yet. Add rows like switch, connection, weight.
                     </p>
                   )}
@@ -645,9 +645,9 @@ export const AdminProductForm = ({
                   />
                 </div>
                 <div>
-                  <p className="mb-2 text-sm font-medium text-[#1a2128]">Variants</p>
+                  <p className="mb-2 text-sm font-medium text-ink">Variants</p>
                   {variantFields.length === 0 && (
-                    <p className="mb-3 text-xs leading-relaxed text-[#5b6660]">
+                    <p className="mb-3 text-xs leading-relaxed text-slate">
                       No variants yet. Most products ship without them.
                     </p>
                   )}
@@ -667,11 +667,11 @@ export const AdminProductForm = ({
 
             {step === 3 && (
               <section>
-                <p className="text-sm font-medium text-[#1a2128]">{review.name || "Untitled product"}</p>
-                <p className="mt-1 text-xs leading-relaxed text-[#5b6660]">
+                <p className="text-sm font-medium text-ink">{review.name || "Untitled product"}</p>
+                <p className="mt-1 text-xs leading-relaxed text-slate">
                   Read this like a packing slip. Go back to fix a row, then save.
                 </p>
-                <dl className="mt-4 divide-y divide-[#d5dbd6] rounded-lg border border-[#d5dbd6] bg-white">
+                <dl className="mt-4 divide-y divide-hairline rounded-lg border border-hairline bg-white">
                   {[
                     ["Category", categoryName],
                     ["Slug", review.slug || "—"],
@@ -682,13 +682,13 @@ export const AdminProductForm = ({
                     ["Specs", specCount === 0 ? "None" : (review.specifications ?? []).map((s) => `${s.key}: ${s.name}`).join(", ")],
                   ].map(([term, value]) => (
                     <div key={term} className="grid grid-cols-3 gap-3 px-4 py-3">
-                      <dt className="text-xs text-[#5b6660]">{term}</dt>
-                      <dd className="col-span-2 break-words text-xs text-[#1a2128]">{value}</dd>
+                      <dt className="text-xs text-slate">{term}</dt>
+                      <dd className="col-span-2 break-words text-xs text-ink">{value}</dd>
                     </div>
                   ))}
                   <div className="grid grid-cols-3 gap-3 px-4 py-3">
-                    <dt className="text-xs text-[#5b6660]">Description</dt>
-                    <dd className="col-span-2 line-clamp-4 break-words text-xs leading-relaxed text-[#1a2128]">{review.description || "—"}</dd>
+                    <dt className="text-xs text-slate">Description</dt>
+                    <dd className="col-span-2 line-clamp-4 break-words text-xs leading-relaxed text-ink">{review.description || "—"}</dd>
                   </div>
                 </dl>
               </section>

@@ -52,7 +52,6 @@ export const FormStepFooter = ({
             type="primary"
             onClick={onSubmit}
             loading={submitting}
-            className="bg-[#0e7c6b]"
           >
             {submitLabel}
           </Button>
@@ -62,7 +61,6 @@ export const FormStepFooter = ({
             onClick={onNext}
             loading={navigating}
             disabled={submitting}
-            className="bg-[#0e7c6b]"
           >
             Continue
           </Button>

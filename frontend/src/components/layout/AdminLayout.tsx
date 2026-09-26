@@ -84,7 +84,7 @@ export const AdminLayout = () => {
         onCollapse={setCollapsed}
         breakpoint="lg"
         collapsedWidth={64}
-        style={{ borderRight: "1px solid #E4E4E7" }}
+        style={{ borderRight: "1px solid #e5e3df" }}
       >
         <div
           style={{
@@ -92,7 +92,7 @@ export const AdminLayout = () => {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            borderBottom: "1px solid #E4E4E7",
+            borderBottom: "1px solid #e5e3df",
             padding: "0 16px",
           }}
         >
@@ -161,8 +161,8 @@ export const AdminLayout = () => {
       <Layout>
         <Header
           style={{
-            background: "#FFFFFF",
-            borderBottom: "1px solid #E4E4E7",
+            background: "#ffffff",
+            borderBottom: "1px solid #e5e3df",
             padding: "0 24px",
             height: 56,
             lineHeight: "56px",
@@ -175,14 +175,14 @@ export const AdminLayout = () => {
             style={{
               fontSize: 16,
               fontWeight: 600,
-              color: "#18181B",
+              color: "#1a1a1a",
               margin: 0,
             }}
           >
             {sectionTitle}
           </h1>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <span style={{ fontSize: 13, color: "#3F3F46" }}>
+            <span style={{ fontSize: 13, color: "#37352f" }}>
               {user?.name ?? user?.email ?? "Admin"}
             </span>
             {user?.role && (
@@ -196,13 +196,13 @@ export const AdminLayout = () => {
                 width: 32,
                 height: 32,
                 borderRadius: "50%",
-                background: "#E4E4E7",
+                background: "#f6f5f4",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
                 fontSize: 13,
                 fontWeight: 600,
-                color: "#52525B",
+                color: "#787671",
               }}
             >
               {initial}
@@ -221,7 +221,7 @@ export const AdminLayout = () => {
         <Content
           style={{
             padding: 24,
-            background: "#FAFAFA",
+            background: "#f6f5f4",
             overflow: "auto",
           }}
         >
