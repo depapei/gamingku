@@ -56,12 +56,16 @@ export const OrderStatusModal = ({
     control,
     handleSubmit,
     reset,
+    watch,
     formState: { errors },
   } = useForm<OrderStatusFormValues>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: yupResolver(schema) as any,
+    mode: "onTouched",
     defaultValues: { status: "" },
   });
+
+  const selectedStatus = watch("status");
 
   useEffect(() => {
     if (open) {
@@ -93,7 +97,9 @@ export const OrderStatusModal = ({
               help={errors.status?.message}
               extra={
                 order
-                  ? `Current: ${order.status}. Only legal transitions are listed.`
+                  ? selectedStatus
+                    ? `Current: ${order.status} → ${selectedStatus}. Only legal transitions are listed.`
+                    : `Current: ${order.status}. Only legal transitions are listed.`
                   : undefined
               }
             >

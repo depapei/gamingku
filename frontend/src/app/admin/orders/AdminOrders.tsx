@@ -60,6 +60,7 @@ export const AdminOrders = () => {
   const isStatusOpen = useOrderStore((s) => s.isStatusOpen);
   const setFilters = useOrderStore((s) => s.setFilters);
   const setPagination = useOrderStore((s) => s.setPagination);
+  const reset = useOrderStore((s) => s.reset);
   const openDetail = useOrderStore((s) => s.openDetail);
   const closeDetail = useOrderStore((s) => s.closeDetail);
   const openStatus = useOrderStore((s) => s.openStatus);
@@ -154,6 +155,20 @@ export const AdminOrders = () => {
         ? ("descend" as const)
         : ("ascend" as const)
       : undefined;
+
+  /** True when any order search/filter is active. */
+  const hasActiveFilters =
+    filters.search !== undefined ||
+    filters.status !== undefined ||
+    filters.dateRange !== undefined;
+
+  /**
+   * Clears the order search, filters and pagination.
+   */
+  const resetFilters = () => {
+    setSearchInput("");
+    reset();
+  };
 
   const columns = [
     {
@@ -310,6 +325,14 @@ export const AdminOrders = () => {
           locale={{ emptyText: <Empty description="No orders found." /> }}
         />
       </div>
+
+      {hasActiveFilters && (
+        <div className="mt-3">
+          <Button size="small" onClick={resetFilters}>
+            Reset filters
+          </Button>
+        </div>
+      )}
 
       <OrderDetailDrawer
         orderId={isDetailOpen ? selectedId : null}

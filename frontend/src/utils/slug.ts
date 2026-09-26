@@ -15,6 +15,17 @@ export const slugify = (value: string): string => {
 };
 
 /**
+ * Extracts the HTTP status code from an Axios-style error.
+ * @param err unknown thrown error
+ * @returns status code, or undefined when unavailable
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const getApiErrorStatus = (err: any): number | undefined => {
+  const status = err?.response?.status;
+  return typeof status === "number" ? status : undefined;
+};
+
+/**
  * Extracts a human-readable message from an Axios-style error.
  * @param err unknown thrown error
  * @param fallback message used when the server provides none

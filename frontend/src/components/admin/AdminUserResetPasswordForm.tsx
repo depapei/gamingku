@@ -3,8 +3,11 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { Button, Form, Input } from "antd";
 
-/** Validation schema for the password-reset form (min 8 + match). */
-const schema = yup.object({
+/**
+ * Validation schema for the password-reset form: password min 8 with a
+ * confirmation that must match. The form is never prefilled.
+ */
+export const validationSchema = yup.object({
   password: yup
     .string()
     .min(8, "Password must be at least 8 characters")
@@ -16,7 +19,7 @@ const schema = yup.object({
 });
 
 /** Values submitted by the admin password-reset form, inferred from the schema. */
-export type ResetPasswordFormValues = yup.InferType<typeof schema>;
+export type ResetPasswordFormValues = yup.InferType<typeof validationSchema>;
 
 /** Props for the admin password-reset form. */
 export interface AdminUserResetPasswordFormProps {
@@ -40,7 +43,8 @@ export const AdminUserResetPasswordForm = ({
     handleSubmit,
     formState: { errors },
   } = useForm<ResetPasswordFormValues>({
-    resolver: yupResolver(schema),
+    resolver: yupResolver(validationSchema),
+    mode: "onTouched",
     defaultValues: { password: "", confirmPassword: "" },
   });
 
@@ -61,6 +65,7 @@ export const AdminUserResetPasswordForm = ({
             <Input.Password
               {...field}
               placeholder="Minimum 8 characters"
+              autoComplete="new-password"
               disabled={submitting}
             />
           </Form.Item>
@@ -79,6 +84,7 @@ export const AdminUserResetPasswordForm = ({
             <Input.Password
               {...field}
               placeholder="Repeat the new password"
+              autoComplete="new-password"
               disabled={submitting}
             />
           </Form.Item>

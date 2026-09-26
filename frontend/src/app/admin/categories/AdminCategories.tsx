@@ -30,7 +30,7 @@ import {
   useCategoryDetail,
 } from "@/src/hooks/useCategories";
 import type { Category } from "@/src/types/category";
-import { getApiErrorMessage } from "@/src/utils/slug";
+import { getApiErrorMessage, getApiErrorStatus } from "@/src/utils/slug";
 
 /** Fallback image for categories without an image URL. */
 const FALLBACK_IMAGE =
@@ -49,6 +49,10 @@ export const AdminCategories = () => {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [selectedData, setSelectedData] = useState<Category | null>(null);
   const [detailId, setDetailId] = useState<number | undefined>(undefined);
+  const [formError, setFormError] = useState<{
+    field: "slug";
+    message: string;
+  } | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -94,6 +98,15 @@ export const AdminCategories = () => {
     return map;
   }, [categories]);
 
+  /**
+   * Clears the category search filter and returns to the first page.
+   */
+  const resetFilters = () => {
+    setSearchInput("");
+    setSearch(undefined);
+    setPagination((prev) => ({ ...prev, current: 1 }));
+  };
+
   const handleCreate = (values: CategoryFormValues) => {
     createMutation.mutate(
       {
@@ -105,10 +118,18 @@ export const AdminCategories = () => {
       {
         onSuccess: (res) => {
           message.success(res.message || "Category created successfully");
+          setFormError(null);
           setIsCreateOpen(false);
         },
         onError: (err) => {
-          message.error(getApiErrorMessage(err, "Failed to create category"));
+          if (getApiErrorStatus(err) === 409) {
+            setFormError({
+              field: "slug",
+              message: getApiErrorMessage(err, "This slug is already in use"),
+            });
+          } else {
+            message.error(getApiErrorMessage(err, "Failed to create category"));
+          }
         },
       },
     );
@@ -132,11 +153,19 @@ export const AdminCategories = () => {
           message.success(
             res.message || `Category ${values.name} updated successfully`,
           );
+          setFormError(null);
           setIsEditOpen(false);
           setSelectedData(null);
         },
         onError: (err) => {
-          message.error(getApiErrorMessage(err, "Failed to update category"));
+          if (getApiErrorStatus(err) === 409) {
+            setFormError({
+              field: "slug",
+              message: getApiErrorMessage(err, "This slug is already in use"),
+            });
+          } else {
+            message.error(getApiErrorMessage(err, "Failed to update category"));
+          }
         },
       },
     );
@@ -325,16 +354,28 @@ export const AdminCategories = () => {
         />
       </div>
 
+      {search !== undefined && (
+        <div className="mt-3">
+          <Button size="small" onClick={resetFilters}>
+            Reset filters
+          </Button>
+        </div>
+      )}
+
       <Modal
         title="Add New Category"
         open={isCreateOpen}
-        onCancel={() => setIsCreateOpen(false)}
+        onCancel={() => {
+          setIsCreateOpen(false);
+          setFormError(null);
+        }}
         footer={null}
         destroyOnClose
       >
         <AdminCategoryForm
           categories={categories}
           submitting={createMutation.isPending}
+          formError={formError}
           onSubmit={handleCreate}
         />
       </Modal>
@@ -345,6 +386,7 @@ export const AdminCategories = () => {
         onCancel={() => {
           setIsEditOpen(false);
           setSelectedData(null);
+          setFormError(null);
         }}
         footer={null}
         destroyOnClose
@@ -355,6 +397,7 @@ export const AdminCategories = () => {
             categories={categories}
             excludeId={selectedData.id}
             submitting={updateMutation.isPending}
+            formError={formError}
             onSubmit={handleUpdate}
           />
         )}

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Alert,
+  Badge,
   Button,
   Input,
   Modal,
@@ -10,6 +11,7 @@ import {
   Switch,
   Table,
   Tag,
+  Tooltip,
   message,
   type TablePaginationConfig,
 } from "antd";
@@ -38,7 +40,10 @@ import {
 import { useAdminUserStore } from "@/src/store/adminUserStore";
 import { useAuthStore } from "@/src/store/authStore";
 import type { User, UserRole } from "@/src/types/user";
-import { getApiErrorMessage } from "@/src/utils/slug";
+import { getApiErrorMessage, getApiErrorStatus } from "@/src/utils/slug";
+
+/** Tooltip message for actions blocked on the current user's own row. */
+const SELF_BLOCK_MESSAGE = "You cannot modify your own account";
 
 /**
  * Admin user management page with server-driven search, filter, sort and pagination.
@@ -68,6 +73,10 @@ export const AdminUsers = () => {
   const [selectedData, setSelectedData] = useState<User | null>(null);
   const [resetTarget, setResetTarget] = useState<User | null>(null);
   const [detailId, setDetailId] = useState<number | undefined>(undefined);
+  const [formError, setFormError] = useState<{
+    field: "email";
+    message: string;
+  } | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -113,8 +122,17 @@ export const AdminUsers = () => {
     return ["customer"];
   }, [callerRole]);
 
-  const isSelfRow = (record: User) =>
-    callerEmail !== "" && record.email.toLowerCase() === callerEmail;
+  const isSelfRow = (record: User) => {
+    if (
+      currentUser?.id !== undefined &&
+      currentUser?.id !== null &&
+      record.id !== undefined &&
+      record.id !== null
+    ) {
+      return String(record.id) === String(currentUser.id);
+    }
+    return callerEmail !== "" && record.email.toLowerCase() === callerEmail;
+  };
 
   const handleCreate = (values: UserFormValues) => {
     createMutation.mutate(
@@ -129,10 +147,18 @@ export const AdminUsers = () => {
       {
         onSuccess: (res) => {
           message.success(res.message || "User created successfully");
+          setFormError(null);
           setIsCreateOpen(false);
         },
         onError: (err) => {
-          message.error(getApiErrorMessage(err, "Failed to create user"));
+          if (getApiErrorStatus(err) === 409) {
+            setFormError({
+              field: "email",
+              message: getApiErrorMessage(err, "This email is already in use"),
+            });
+          } else {
+            message.error(getApiErrorMessage(err, "Failed to create user"));
+          }
         },
       },
     );
@@ -153,10 +179,18 @@ export const AdminUsers = () => {
       {
         onSuccess: (res) => {
           message.success(res.message || "User updated successfully");
+          setFormError(null);
           setSelectedData(null);
         },
         onError: (err) => {
-          message.error(getApiErrorMessage(err, "Failed to update user"));
+          if (getApiErrorStatus(err) === 409) {
+            setFormError({
+              field: "email",
+              message: getApiErrorMessage(err, "This email is already in use"),
+            });
+          } else {
+            message.error(getApiErrorMessage(err, "Failed to update user"));
+          }
         },
       },
     );
@@ -283,19 +317,27 @@ export const AdminUsers = () => {
       title: "Status",
       dataIndex: "isActive",
       key: "isActive",
-      render: (value: boolean, record: User) => (
-        <Space size="small">
-          <Switch
-            checked={!!value}
-            disabled={isSelfRow(record) || statusMutation.isPending}
-            onChange={(next) => handleStatusChange(record, next)}
-            aria-label={`Toggle status for ${record.email}`}
-          />
-          <Tag color={value ? "green" : "default"}>
-            {value ? "Active" : "Inactive"}
-          </Tag>
-        </Space>
-      ),
+      render: (value: boolean, record: User) => {
+        const self = isSelfRow(record);
+        return (
+          <Space size="small">
+            <Tooltip title={self ? SELF_BLOCK_MESSAGE : ""}>
+              <span>
+                <Switch
+                  checked={!!value}
+                  disabled={self || statusMutation.isPending}
+                  onChange={(next) => handleStatusChange(record, next)}
+                  aria-label={`Toggle status for ${record.email}`}
+                />
+              </span>
+            </Tooltip>
+            <Badge
+              status={value ? "success" : "default"}
+              text={value ? "Active" : "Inactive"}
+            />
+          </Space>
+        );
+      },
     },
     {
       title: "Created",
@@ -336,6 +378,18 @@ export const AdminUsers = () => {
                 onClick={() => setResetTarget(record)}
               />
             )}
+            {self && (
+              <Tooltip title={SELF_BLOCK_MESSAGE}>
+                <span>
+                  <Button
+                    type="text"
+                    icon={<KeyOutlined />}
+                    aria-label={`Reset password for ${record.email}`}
+                    disabled
+                  />
+                </span>
+              </Tooltip>
+            )}
             {!self && (
               <Popconfirm
                 title="Delete the user"
@@ -352,6 +406,19 @@ export const AdminUsers = () => {
                   aria-label={`Delete ${record.email}`}
                 />
               </Popconfirm>
+            )}
+            {self && (
+              <Tooltip title={SELF_BLOCK_MESSAGE}>
+                <span>
+                  <Button
+                    type="text"
+                    danger
+                    icon={<DeleteOutlined />}
+                    aria-label={`Delete ${record.email}`}
+                    disabled
+                  />
+                </span>
+              </Tooltip>
             )}
           </Space>
         );
@@ -459,7 +526,10 @@ export const AdminUsers = () => {
       <Modal
         title="Add New User"
         open={isCreateOpen}
-        onCancel={() => setIsCreateOpen(false)}
+        onCancel={() => {
+          setIsCreateOpen(false);
+          setFormError(null);
+        }}
         footer={null}
         destroyOnClose
       >
@@ -467,6 +537,7 @@ export const AdminUsers = () => {
           mode="create"
           allowedRoles={allowedRoles}
           submitting={createMutation.isPending}
+          formError={formError}
           onSubmit={handleCreate}
         />
       </Modal>
@@ -474,7 +545,10 @@ export const AdminUsers = () => {
       <Modal
         title={`Edit ${selectedData?.email ?? ""}`}
         open={selectedData !== null}
-        onCancel={() => setSelectedData(null)}
+        onCancel={() => {
+          setSelectedData(null);
+          setFormError(null);
+        }}
         footer={null}
         destroyOnClose
       >
@@ -486,6 +560,7 @@ export const AdminUsers = () => {
               isSelfRow(selectedData) ? [selectedData.role] : allowedRoles
             }
             submitting={updateMutation.isPending}
+            formError={formError}
             onSubmit={handleUpdate}
           />
         )}

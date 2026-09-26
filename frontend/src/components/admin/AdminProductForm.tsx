@@ -22,8 +22,12 @@ import { WizardStepper } from "../ui/WizardStepper";
 import { WizardFormLayout } from "../ui/WizardFormLayout";
 import { FormStepFooter } from "../ui/FormStepFooter";
 
-/** Validation schema for the admin product form. */
-const schema = yup
+/**
+ * Validation schema for the admin product form: name min 3, slug-regex,
+ * positive price, integer stock >= 0, required category, description max 2000,
+ * at least one image URL.
+ */
+export const validationSchema = yup
   .object({
     name: yup.string().trim().min(3).required("Product name is required"),
     slug: yup
@@ -58,6 +62,7 @@ const schema = yup
       .string()
       .trim()
       .min(10, "Description must be at least 10 characters")
+      .max(2000, "Description must be at most 2000 characters")
       .required("Description is required"),
     featured: yup.boolean().default(false).optional(),
     images: yup
@@ -98,7 +103,7 @@ const schema = yup
   .required();
 
 /** Form values submitted by the admin product form. */
-export type ProductFormValues = yup.InferType<typeof schema>;
+export type ProductFormValues = yup.InferType<typeof validationSchema>;
 
 /** Create or edit mode for the wizard. Edit locks the slug field. */
 export type ProductFormMode = "create" | "edit";
@@ -115,6 +120,8 @@ export interface AdminProductFormProps {
   submitting?: boolean;
   /** Wizard mode. Defaults to edit when initialData has a slug, else create. */
   mode?: ProductFormMode;
+  /** Server-side conflict error (e.g. duplicate slug after a 409) mapped to the slug field. */
+  formError?: { field: "slug"; message: string } | null;
 }
 
 /** Field names validated before leaving each step. Final step submits the whole schema. */
@@ -262,6 +269,7 @@ export const AdminProductForm = ({
   categories = [],
   submitting = false,
   mode,
+  formError = null,
 }: AdminProductFormProps) => {
   const resolvedMode: ProductFormMode = mode ?? (initialData?.slug ? "edit" : "create");
   const isEdit = resolvedMode === "edit";
@@ -278,12 +286,20 @@ export const AdminProductForm = ({
     trigger,
     handleSubmit,
     getValues,
+    setError,
     formState: { errors },
   } = useForm<ProductFormValues>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: yupResolver(schema) as any,
+    resolver: yupResolver(validationSchema) as any,
+    mode: "onTouched",
     defaultValues: defaults,
   });
+
+  useEffect(() => {
+    if (formError) {
+      setError(formError.field, { message: formError.message });
+    }
+  }, [formError, setError]);
 
   useEffect(() => {
     reset(toDefaults(initialData));

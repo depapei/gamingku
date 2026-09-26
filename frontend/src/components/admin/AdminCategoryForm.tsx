@@ -6,19 +6,26 @@ import { Button, Form, Input, Select } from "antd";
 import { Category } from "../../types/category";
 import { slugify } from "../../utils/slug";
 
-/** Validation schema for the category form. Creator is server-derived. */
-const schema = yup
+/**
+ * Validation schema for the category form: name min 2, slug-regex,
+ * image URL, optional parent. Uniqueness is server-enforced (409 maps to slug).
+ */
+export const validationSchema = yup
   .object({
     id: yup.number().optional(),
     name: yup.string().trim().min(2).required("Category name is required"),
-    slug: yup.string().trim().min(2).required("Slug is required"),
+    slug: yup
+      .string()
+      .trim()
+      .matches(/^[a-z0-9-]+$/, "Slug must be lowercase letters, numbers or hyphens")
+      .required("Slug is required"),
     parentId: yup.number().nullable().optional().default(null),
     image: yup.string().trim().url("Image must be a valid URL").required("Image URL is required"),
   })
   .required();
 
 /** Form values submitted by the admin category form. */
-export type CategoryFormValues = yup.InferType<typeof schema>;
+export type CategoryFormValues = yup.InferType<typeof validationSchema>;
 
 /** Props for the admin category form. */
 export interface AdminCategoryFormProps {
@@ -32,6 +39,8 @@ export interface AdminCategoryFormProps {
   excludeId?: number;
   /** Disables the submit button while a mutation is pending. */
   submitting?: boolean;
+  /** Server-side conflict error (e.g. duplicate slug after a 409) mapped to the slug field. */
+  formError?: { field: "slug"; message: string } | null;
 }
 
 /**
@@ -45,16 +54,19 @@ export const AdminCategoryForm = ({
   categories = [],
   excludeId,
   submitting = false,
+  formError = null,
 }: AdminCategoryFormProps) => {
   const {
     watch,
     setValue,
     control,
     handleSubmit,
+    setError,
     formState: { errors },
   } = useForm<CategoryFormValues>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: yupResolver(schema) as any,
+    resolver: yupResolver(validationSchema) as any,
+    mode: "onTouched",
     defaultValues: {
       id: initialData?.id,
       name: initialData?.name ?? "",
@@ -63,6 +75,12 @@ export const AdminCategoryForm = ({
       image: initialData?.image ?? "",
     },
   });
+
+  useEffect(() => {
+    if (formError) {
+      setError(formError.field, { message: formError.message });
+    }
+  }, [formError, setError]);
 
   const watchedName = watch("name");
 
@@ -116,7 +134,7 @@ export const AdminCategoryForm = ({
           <Form.Item
             label="Slug"
             validateStatus={errors.slug ? "error" : ""}
-            help={errors.slug?.message}
+            help={errors.slug?.message ?? "Auto-generated from the name."}
           >
             <Input {...field} placeholder="keyboards" disabled={submitting} />
           </Form.Item>

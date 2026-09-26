@@ -36,7 +36,7 @@ import type {
   UpdateProductInput,
 } from "../../../types/product";
 import { formatPrice } from "../../../utils/formatPrice";
-import { getApiErrorMessage } from "../../../utils/slug";
+import { getApiErrorMessage, getApiErrorStatus } from "../../../utils/slug";
 
 /** Fallback image for products without an image URL. */
 const FALLBACK_IMAGE =
@@ -93,6 +93,10 @@ export const AdminProducts = () => {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingSlug, setEditingSlug] = useState<string | undefined>(undefined);
   const [detailSlug, setDetailSlug] = useState<string | undefined>(undefined);
+  const [formError, setFormError] = useState<{
+    field: "slug";
+    message: string;
+  } | null>(null);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -136,10 +140,18 @@ export const AdminProducts = () => {
     createMutation.mutate(toCreateInput(values), {
       onSuccess: (res) => {
         message.success(res.message || "Product created successfully");
+        setFormError(null);
         setIsCreateOpen(false);
       },
       onError: (err) => {
-        message.error(getApiErrorMessage(err, "Failed to create product"));
+        if (getApiErrorStatus(err) === 409) {
+          setFormError({
+            field: "slug",
+            message: getApiErrorMessage(err, "This slug is already in use"),
+          });
+        } else {
+          message.error(getApiErrorMessage(err, "Failed to create product"));
+        }
       },
     });
   };
@@ -151,10 +163,18 @@ export const AdminProducts = () => {
       {
         onSuccess: (res) => {
           message.success(res.message || "Product updated successfully");
+          setFormError(null);
           setEditingSlug(undefined);
         },
         onError: (err) => {
-          message.error(getApiErrorMessage(err, "Failed to update product"));
+          if (getApiErrorStatus(err) === 409) {
+            setFormError({
+              field: "slug",
+              message: getApiErrorMessage(err, "This slug is already in use"),
+            });
+          } else {
+            message.error(getApiErrorMessage(err, "Failed to update product"));
+          }
         },
       },
     );
@@ -197,6 +217,15 @@ export const AdminProducts = () => {
         ? ("descend" as const)
         : ("ascend" as const)
       : undefined;
+
+  /**
+   * Clears the product search filter and returns to the first page.
+   */
+  const resetFilters = () => {
+    setSearchInput("");
+    setSearch(undefined);
+    setPagination((prev) => ({ ...prev, current: 1 }));
+  };
 
   const columns = [
     {
@@ -317,6 +346,7 @@ export const AdminProducts = () => {
   const closeWizard = () => {
     setIsCreateOpen(false);
     setEditingSlug(undefined);
+    setFormError(null);
   };
 
   return (
@@ -365,7 +395,7 @@ export const AdminProducts = () => {
         <Table<AdminProduct>
           columns={columns}
           dataSource={products}
-          rowKey="slug"
+          rowKey="id"
           loading={isLoading || isFetching}
           pagination={{
             current: pagination.current,
@@ -378,6 +408,14 @@ export const AdminProducts = () => {
           locale={{ emptyText: "No products found." }}
         />
       </div>
+
+      {search !== undefined && (
+        <div className="mt-3">
+          <Button size="small" onClick={resetFilters}>
+            Reset filters
+          </Button>
+        </div>
+      )}
 
       <Modal
         title={wizardMode === "edit" ? `Edit ${editingSlug ?? ""}` : "Add New Product"}
@@ -395,6 +433,7 @@ export const AdminProducts = () => {
             submitting={
               editingSlug ? updateMutation.isPending : createMutation.isPending
             }
+            formError={formError}
             onSubmit={editingSlug ? handleUpdate : handleCreate}
           />
         )}

@@ -18,6 +18,8 @@ export interface AdminUserFormProps {
   allowedRoles: UserRole[];
   /** Disables the submit button while a mutation is pending. */
   submitting?: boolean;
+  /** Server-side conflict error (e.g. duplicate email after a 409) mapped to the email field. */
+  formError?: { field: "email"; message: string } | null;
 }
 
 /**
@@ -36,19 +38,20 @@ const isUrlOrEmpty = (value: string | undefined): boolean => {
 };
 
 /**
- * Builds the user validation schema. Password rules apply in create mode
- * only; the shape is identical in both modes so the inferred values type
- * stays a single object type.
+ * Builds the user validation schema: name min 2, email, password min 8
+ * (create-only, optional on edit), role one of the caller-allowed roles.
+ * Password rules apply in create mode only; the shape is identical in both
+ * modes so the inferred values type stays a single object type.
  * @param mode create or edit
  * @param allowedRoles roles the caller may assign
  * @returns yup object schema for the form
  */
-const buildUserSchema = (mode: "create" | "edit", allowedRoles: UserRole[]) =>
+const buildValidationSchema = (mode: "create" | "edit", allowedRoles: UserRole[]) =>
   yup.object({
     name: yup
       .string()
       .trim()
-      .min(3, "Name must be at least 3 characters")
+      .min(2, "Name must be at least 2 characters")
       .required("Name is required"),
     email: yup
       .string()
@@ -92,7 +95,7 @@ const buildUserSchema = (mode: "create" | "edit", allowedRoles: UserRole[]) =>
   });
 
 /** Values submitted by the admin user form, inferred from the schema. */
-export type UserFormValues = yup.InferType<ReturnType<typeof buildUserSchema>>;
+export type UserFormValues = yup.InferType<ReturnType<typeof buildValidationSchema>>;
 
 /**
  * User create/edit form with validation mirroring the backend rules.
@@ -105,12 +108,13 @@ export const AdminUserForm = ({
   mode,
   allowedRoles,
   submitting = false,
+  formError = null,
 }: AdminUserFormProps) => {
   const roles =
     allowedRoles.length > 0 ? allowedRoles : (["customer"] as UserRole[]);
 
   const schema = useMemo(
-    () => buildUserSchema(mode, roles),
+    () => buildValidationSchema(mode, roles),
     [mode, roles],
   );
 
@@ -118,9 +122,11 @@ export const AdminUserForm = ({
     control,
     handleSubmit,
     reset,
+    setError,
     formState: { errors },
   } = useForm<UserFormValues>({
     resolver: yupResolver(schema),
+    mode: "onTouched",
     defaultValues: {
       name: initialData?.name ?? "",
       email: initialData?.email ?? "",
@@ -131,6 +137,12 @@ export const AdminUserForm = ({
       avatar: initialData?.avatar ?? "",
     },
   });
+
+  useEffect(() => {
+    if (formError) {
+      setError(formError.field, { message: formError.message });
+    }
+  }, [formError, setError]);
 
   useUserFormReset(initialData, roles, reset);
 
@@ -188,6 +200,7 @@ export const AdminUserForm = ({
                 <Input.Password
                   {...field}
                   placeholder="Minimum 8 characters"
+                  autoComplete="new-password"
                   disabled={submitting}
                 />
               </Form.Item>
@@ -206,6 +219,7 @@ export const AdminUserForm = ({
                 <Input.Password
                   {...field}
                   placeholder="Repeat the password"
+                  autoComplete="new-password"
                   disabled={submitting}
                 />
               </Form.Item>

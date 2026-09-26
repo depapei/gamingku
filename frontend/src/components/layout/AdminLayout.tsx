@@ -23,6 +23,10 @@ const SECTION_TITLES: Record<string, string> = {
   "/admin/users": "Users",
 };
 
+/**
+ * Role-guarded admin shell (Sider 232px, Header 56px, Content 24px).
+ * Redirects non-admin users to / with an error toast after boot.
+ */
 export const AdminLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -47,7 +51,7 @@ export const AdminLayout = () => {
     () => location.pathname.replace(/\/$/, "") || "/admin",
     [location.pathname],
   );
-  const sectionTitle = SECTION_TITLES[pathname] ?? "Admin";
+  const sectionTitle = SECTION_TITLES[pathname] ?? "Not found";
   const initial = (user?.name ?? user?.email ?? "A").charAt(0).toUpperCase();
 
   const handleMenuClick = ({ key }: { key: string }) => {
@@ -66,7 +70,11 @@ export const AdminLayout = () => {
 
   if (isBooting) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-sm text-zinc-500">
+      <div
+        role="status"
+        aria-live="polite"
+        className="min-h-screen flex items-center justify-center text-sm text-zinc-500"
+      >
         Loading admin…
       </div>
     );
@@ -112,6 +120,7 @@ export const AdminLayout = () => {
         </div>
         <Menu
           mode="inline"
+          aria-label="Admin navigation"
           selectedKeys={[pathname]}
           onClick={handleMenuClick}
           style={{ borderRight: 0, padding: "12px 8px" }}
@@ -160,6 +169,7 @@ export const AdminLayout = () => {
       </Sider>
       <Layout>
         <Header
+          role="banner"
           style={{
             background: "#ffffff",
             borderBottom: "1px solid #e5e3df",
@@ -219,6 +229,7 @@ export const AdminLayout = () => {
           </div>
         </Header>
         <Content
+          role="main"
           style={{
             padding: 24,
             background: "#f6f5f4",

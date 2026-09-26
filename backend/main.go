@@ -2,6 +2,7 @@ package main
 
 import (
 	AdminCategoryController "backend/controllers/admin/category"
+	AdminDashboardController "backend/controllers/admin/dashboard"
 	AdminOrderController "backend/controllers/admin/order"
 	AdminProductController "backend/controllers/admin/product"
 	AdminUserController "backend/controllers/admin/user"
@@ -93,6 +94,10 @@ func main() {
 			user.PUT("/:id/status", AdminUserController.UpdateUserStatus)
 			user.PUT("/:id/password", AdminUserController.ResetUserPassword)
 			user.DELETE("/:id", AdminUserController.DeleteUser)
+		}
+		dashboard := admin.Group("/dashboard")
+		{
+			dashboard.GET("/summary", AdminDashboardController.GetSummary)
 		}
 	}
 
