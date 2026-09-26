@@ -15,6 +15,7 @@ import { Cart } from "./app/cart/Cart";
 import { Compare } from "./app/compare/Compare";
 import { AdminDashboard } from "./app/admin/AdminDashboard";
 import { AdminProducts } from "./app/admin/products/AdminProducts";
+import { AdminOrders } from "./app/admin/orders/AdminOrders";
 import { About } from "./app/about/About";
 import { Manual } from "./app/support/Manual";
 import { Contact } from "./app/support/Contact";
@@ -76,6 +77,7 @@ export default function App() {
             <Route index element={<AdminDashboard />} />
             <Route path="products" element={<AdminProducts />} />
             <Route path="categories" element={<AdminCategories />} />
+            <Route path="orders" element={<AdminOrders />} />
             <Route path="users" element={<AdminUsers />} />
           </Route>
         </Routes>

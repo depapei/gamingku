@@ -64,7 +64,7 @@ export const AdminLayout = () => {
             {
               key: "/admin/orders",
               icon: <ShoppingOutlined />,
-              label: "Orders",
+              label: <Link to="/admin/orders">Orders</Link>,
             },
             {
               key: "/admin/users",

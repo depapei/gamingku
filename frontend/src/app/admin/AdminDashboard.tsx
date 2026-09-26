@@ -6,7 +6,7 @@ import { products } from '../../data/products';
 import { formatPrice } from '../../utils/formatPrice';
 
 export const AdminDashboard = () => {
-  const totalRevenue = orders.reduce((sum, order) => sum + order.totalPrice, 0);
+  const totalRevenue = orders.reduce((sum, order) => sum + order.totalAmount, 0);
   const totalOrders = orders.length;
   const totalProducts = products.length;
 
@@ -24,8 +24,8 @@ export const AdminDashboard = () => {
     },
     {
       title: 'Total',
-      dataIndex: 'totalPrice',
-      key: 'totalPrice',
+      dataIndex: 'totalAmount',
+      key: 'totalAmount',
       render: (price: number) => formatPrice(price),
     },
     {
