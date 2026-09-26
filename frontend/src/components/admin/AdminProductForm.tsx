@@ -1,22 +1,26 @@
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { Fragment, useEffect, useMemo } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import * as yup from "yup";
 import {
   Button,
   Checkbox,
-  Divider,
   Form,
   Input,
   InputNumber,
   Select,
   Space,
-  Switch,
 } from "antd";
 import { DeleteOutlined, PlusOutlined } from "@ant-design/icons";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { ClipboardCheck, FileText, Package, Tag } from "lucide-react";
 import type { Category } from "../../types/category";
 import type { AdminProduct } from "../../types/product";
 import { slugify } from "../../utils/slug";
+import { formatPrice } from "../../utils/formatPrice";
+import { WizardStepper } from "../ui/WizardStepper";
+import { WizardFormLayout } from "../ui/WizardFormLayout";
+import { FormStepFooter } from "../ui/FormStepFooter";
 
 /** Validation schema for the admin product form. */
 const schema = yup
@@ -96,6 +100,9 @@ const schema = yup
 /** Form values submitted by the admin product form. */
 export type ProductFormValues = yup.InferType<typeof schema>;
 
+/** Create or edit mode for the wizard. Edit locks the slug field. */
+export type ProductFormMode = "create" | "edit";
+
 /** Props for the admin product form. */
 export interface AdminProductFormProps {
   /** Submit handler receiving validated values. */
@@ -106,7 +113,17 @@ export interface AdminProductFormProps {
   categories?: Category[];
   /** Disables inputs while a mutation is pending. */
   submitting?: boolean;
+  /** Wizard mode. Defaults to edit when initialData has a slug, else create. */
+  mode?: ProductFormMode;
 }
+
+/** Field names validated before leaving each step. Final step submits the whole schema. */
+const STEP_FIELDS = [
+  ["name", "slug", "categoryId"],
+  ["description", "images", "specifications"],
+  ["price", "discountPrice", "stock", "variants"],
+  [],
+] as const;
 
 /** Maps admin product detail to form defaults. */
 const toDefaults = (
@@ -143,6 +160,8 @@ interface VariantItemProps {
   errors: any;
   /** Removes this variant. */
   onRemove: () => void;
+  /** Disables inputs while submitting. */
+  disabled?: boolean;
 }
 
 /**
@@ -150,7 +169,7 @@ interface VariantItemProps {
  * @param props variant item props
  * @returns variant fieldset element
  */
-const VariantItem = ({ nestIndex, control, errors, onRemove }: VariantItemProps) => {
+const VariantItem = ({ nestIndex, control, errors, onRemove, disabled }: VariantItemProps) => {
   const { fields, append, remove } = useFieldArray({
     control,
     name: `variants.${nestIndex}.options` as const,
@@ -158,10 +177,10 @@ const VariantItem = ({ nestIndex, control, errors, onRemove }: VariantItemProps)
   const variantError = errors?.variants?.[nestIndex];
 
   return (
-    <div className="border border-zinc-200 rounded p-3 mb-3">
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-sm font-medium">Variant #{nestIndex + 1}</span>
-        <Button type="text" danger size="small" icon={<DeleteOutlined />} onClick={onRemove} />
+    <div className="rounded-lg border border-[#d5dbd6] bg-white p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <span className="text-sm font-medium text-[#1a2128]">Variant {nestIndex + 1}</span>
+        <Button type="text" danger size="small" icon={<DeleteOutlined />} onClick={onRemove} aria-label={`Remove variant ${nestIndex + 1}`} />
       </div>
       <Controller
         name={`variants.${nestIndex}.name` as const}
@@ -172,49 +191,52 @@ const VariantItem = ({ nestIndex, control, errors, onRemove }: VariantItemProps)
             validateStatus={variantError?.name ? "error" : ""}
             help={variantError?.name?.message}
           >
-            <Input {...field} placeholder="Color" />
+            <Input {...field} placeholder="Color" disabled={disabled} />
           </Form.Item>
         )}
       />
-      {fields.map((opt, optIdx) => {
-        const optError = variantError?.options?.[optIdx];
-        return (
-          <Space key={opt.id} align="baseline" className="w-full">
-            <Controller
-              name={`variants.${nestIndex}.options.${optIdx}.name` as const}
-              control={control}
-              render={({ field }) => (
-                <Form.Item
-                  validateStatus={optError?.name ? "error" : ""}
-                  help={optError?.name?.message}
-                >
-                  <Input {...field} placeholder="Black" />
-                </Form.Item>
-              )}
-            />
-            <Controller
-              name={`variants.${nestIndex}.options.${optIdx}.isAvailable` as const}
-              control={control}
-              render={({ field }) => (
-                <Form.Item>
+      <div className="space-y-2">
+        {fields.map((opt, optIdx) => {
+          const optError = variantError?.options?.[optIdx];
+          return (
+            <Space key={opt.id} align="baseline" className="flex w-full">
+              <Controller
+                name={`variants.${nestIndex}.options.${optIdx}.name` as const}
+                control={control}
+                render={({ field }) => (
+                  <Form.Item
+                    className="mb-0 flex-1"
+                    validateStatus={optError?.name ? "error" : ""}
+                    help={optError?.name?.message}
+                  >
+                    <Input {...field} placeholder="Black" disabled={disabled} />
+                  </Form.Item>
+                )}
+              />
+              <Controller
+                name={`variants.${nestIndex}.options.${optIdx}.isAvailable` as const}
+                control={control}
+                render={({ field }) => (
                   <Checkbox
                     checked={!!field.value}
                     onChange={(e) => field.onChange(e.target.checked)}
+                    disabled={disabled}
                   >
                     Available
                   </Checkbox>
-                </Form.Item>
-              )}
-            />
-            <Button type="text" danger icon={<DeleteOutlined />} onClick={() => remove(optIdx)} />
-          </Space>
-        );
-      })}
+                )}
+              />
+              <Button type="text" danger icon={<DeleteOutlined />} onClick={() => remove(optIdx)} aria-label="Remove option" />
+            </Space>
+          );
+        })}
+      </div>
       <Button
         type="dashed"
         size="small"
         icon={<PlusOutlined />}
         onClick={() => append({ name: "", isAvailable: true })}
+        className="mt-3"
       >
         Add option
       </Button>
@@ -223,31 +245,42 @@ const VariantItem = ({ nestIndex, control, errors, onRemove }: VariantItemProps)
 };
 
 /**
- * Product create/edit form with auto-slug, validation and dynamic lists.
+ * Product create/edit form as a four-step wizard with per-step validation.
  * @param props form props
- * @returns product form element
+ * @returns wizard form element
  */
 export const AdminProductForm = ({
   onSubmit,
   initialData,
   categories = [],
   submitting = false,
+  mode,
 }: AdminProductFormProps) => {
+  const resolvedMode: ProductFormMode = mode ?? (initialData?.slug ? "edit" : "create");
+  const isEdit = resolvedMode === "edit";
+  const reduceMotion = useReducedMotion();
+  const [step, setStep] = useState(0);
+  const [navigating, setNavigating] = useState(false);
+
+  const defaults = useMemo(() => toDefaults(initialData), [initialData]);
   const {
     watch,
     setValue,
     reset,
     control,
+    trigger,
     handleSubmit,
+    getValues,
     formState: { errors },
   } = useForm<ProductFormValues>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: yupResolver(schema) as any,
-    defaultValues: useMemo(() => toDefaults(initialData), [initialData]),
+    defaultValues: defaults,
   });
 
   useEffect(() => {
     reset(toDefaults(initialData));
+    setStep(0);
   }, [initialData, reset]);
 
   const watchedName = watch("name");
@@ -255,9 +288,7 @@ export const AdminProductForm = ({
   useEffect(() => {
     const subscription = watch((values, { name }) => {
       if (name === "name" && !initialData?.slug) {
-        setValue("slug", slugify(String(values.name ?? "")), {
-          shouldValidate: true,
-        });
+        setValue("slug", slugify(String(values.name ?? "")), { shouldValidate: true });
       }
     });
     return () => subscription.unsubscribe();
@@ -265,9 +296,7 @@ export const AdminProductForm = ({
 
   useEffect(() => {
     if (!initialData?.slug && watchedName) {
-      setValue("slug", slugify(String(watchedName ?? "")), {
-        shouldValidate: false,
-      });
+      setValue("slug", slugify(String(watchedName ?? "")), { shouldValidate: false });
     }
   }, [watchedName, initialData?.slug, setValue]);
 
@@ -313,248 +342,325 @@ export const AdminProductForm = ({
     [categories],
   );
 
+  const live = watch();
+  const categoryName =
+    categories.find((c) => c.id === Number(live.categoryId))?.name ?? "Not set";
+  const imageCount = (live.images ?? []).filter(Boolean).length;
+  const variantCount = (live.variants ?? []).length;
+  const specCount = (live.specifications ?? []).length;
+
+  /** Validates the active step before advancing. */
+  const handleNext = async () => {
+    setNavigating(true);
+    try {
+      const fields = STEP_FIELDS[step] as unknown as Parameters<typeof trigger>[0];
+      const ok = fields.length === 0 ? true : await trigger(fields);
+      if (ok) setStep((s) => Math.min(s + 1, STEP_FIELDS.length - 1));
+    } finally {
+      setNavigating(false);
+    }
+  };
+
+  const handleBack = () => setStep((s) => Math.max(s - 1, 0));
+
+  const review = getValues();
+
   return (
-    <Form layout="vertical" onFinish={handleSubmit(onSubmit)}>
-      <Controller
-        name="name"
-        control={control}
-        render={({ field }) => (
-          <Form.Item
-            label="Product Name"
-            validateStatus={errors.name ? "error" : ""}
-            help={errors.name?.message}
-          >
-            <Input {...field} placeholder="Pro Mechanical Keyboard X1" disabled={submitting} />
-          </Form.Item>
-        )}
-      />
-
-      <Controller
-        name="slug"
-        control={control}
-        render={({ field }) => (
-          <Form.Item
-            label="Slug"
-            validateStatus={errors.slug ? "error" : ""}
-            help={errors.slug?.message}
-          >
-            <Input {...field} placeholder="pro-mechanical-keyboard-x1" disabled />
-          </Form.Item>
-        )}
-      />
-
-      <div className="grid grid-cols-2 gap-4">
-        <Controller
-          name="price"
-          control={control}
-          render={({ field }) => (
-            <Form.Item
-              label="Price"
-              validateStatus={errors.price ? "error" : ""}
-              help={errors.price?.message}
-            >
-              <InputNumber
-                value={field.value}
-                onChange={field.onChange}
-                onBlur={field.onBlur}
-                prefix="Rp"
-                style={{ width: "100%" }}
-                min={0}
-                disabled={submitting}
-              />
-            </Form.Item>
-          )}
-        />
-        <Controller
-          name="discountPrice"
-          control={control}
-          render={({ field }) => (
-            <Form.Item
-              label="Discount Price"
-              validateStatus={errors.discountPrice ? "error" : ""}
-              help={errors.discountPrice?.message}
-            >
-              <InputNumber
-                value={field.value ?? undefined}
-                onChange={field.onChange}
-                onBlur={field.onBlur}
-                prefix="Rp"
-                style={{ width: "100%" }}
-                min={0}
-                disabled={submitting}
-              />
-            </Form.Item>
-          )}
-        />
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <Controller
-          name="stock"
-          control={control}
-          render={({ field }) => (
-            <Form.Item
-              label="Stock"
-              validateStatus={errors.stock ? "error" : ""}
-              help={errors.stock?.message}
-            >
-              <InputNumber
-                value={field.value}
-                onChange={field.onChange}
-                onBlur={field.onBlur}
-                style={{ width: "100%" }}
-                min={0}
-                precision={0}
-                disabled={submitting}
-              />
-            </Form.Item>
-          )}
-        />
-        <Controller
-          name="categoryId"
-          control={control}
-          render={({ field }) => (
-            <Form.Item
-              label="Category"
-              validateStatus={errors.categoryId ? "error" : ""}
-              help={errors.categoryId?.message}
-            >
-              <Select
-                value={field.value || undefined}
-                onChange={field.onChange}
-                onBlur={field.onBlur}
-                showSearch={{ optionFilterProp: "label" }}
-                placeholder="Select category"
-                className="w-full"
-                options={groupedOptions}
-                disabled={submitting}
-              />
-            </Form.Item>
-          )}
-        />
-      </div>
-
-      <Controller
-        name="description"
-        control={control}
-        render={({ field }) => (
-          <Form.Item
-            label="Description"
-            validateStatus={errors.description ? "error" : ""}
-            help={errors.description?.message}
-          >
-            <Input.TextArea {...field} rows={2} disabled={submitting} />
-          </Form.Item>
-        )}
-      />
-
-      <Controller
-        name="featured"
-        control={control}
-        render={({ field }) => (
-          <Form.Item>
-            <div className="flex items-center space-x-2">
-              <Switch checked={!!field.value} onChange={field.onChange} disabled={submitting} />
-              <span>Featured Product</span>
+    <Form layout="vertical">
+      <WizardFormLayout
+        sidebar={
+          <div className="space-y-6">
+            <div>
+              <p className="text-sm font-semibold">{isEdit ? "Edit product" : "New product"}</p>
+              <p className="mt-1 text-xs leading-relaxed opacity-70">
+                {isEdit
+                  ? "Changes replace variants and specs in one save."
+                  : "Four short passes. Nothing saves until the last one."}
+              </p>
             </div>
-          </Form.Item>
-        )}
-      />
-
-      <Divider orientation="left">Images</Divider>
-      {imageFields.map((img, idx) => (
-        <Space key={img.id} align="baseline" className="w-full">
-          <Controller
-            name={`images.${idx}` as const}
-            control={control}
-            render={({ field }) => (
-              <Form.Item
-                validateStatus={errors.images?.[idx] ? "error" : ""}
-                help={(errors.images?.[idx] as { message?: string } | undefined)?.message}
-              >
-                <Input {...field} placeholder="https://..." style={{ width: 320 }} disabled={submitting} />
-              </Form.Item>
-            )}
+            <WizardStepper
+              current={step}
+              onChange={(idx) => setStep(idx)}
+              steps={[
+                { title: "Basics", description: "Name and shelf", icon: <Package size={14} /> },
+                { title: "Details", description: "Images and specs", icon: <FileText size={14} /> },
+                { title: "Price and stock", description: "Money and variants", icon: <Tag size={14} /> },
+                { title: "Review", description: "Check and save", icon: <ClipboardCheck size={14} /> },
+              ]}
+            />
+            <dl className="space-y-2 border-t border-white/15 pt-4 text-xs">
+              <div className="flex items-baseline justify-between gap-2">
+                <dt className="opacity-60">Price</dt>
+                <dd className="font-medium tabular-nums">{formatPrice(Number(live.price) || 0)}</dd>
+              </div>
+              <div className="flex items-baseline justify-between gap-2">
+                <dt className="opacity-60">Stock</dt>
+                <dd className="font-medium tabular-nums">{Number(live.stock) || 0}</dd>
+              </div>
+              <div className="flex items-baseline justify-between gap-2">
+                <dt className="opacity-60">Media</dt>
+                <dd className="font-medium tabular-nums">{imageCount} image{imageCount === 1 ? "" : "s"}</dd>
+              </div>
+              <div className="flex items-baseline justify-between gap-2">
+                <dt className="opacity-60">Options</dt>
+                <dd className="font-medium tabular-nums">{variantCount} variants, {specCount} specs</dd>
+              </div>
+            </dl>
+          </div>
+        }
+        footer={
+          <FormStepFooter
+            current={step}
+            total={STEP_FIELDS.length}
+            onBack={handleBack}
+            onNext={handleNext}
+            onSubmit={handleSubmit(onSubmit)}
+            submitting={submitting}
+            navigating={navigating}
+            submitLabel={isEdit ? "Save changes" : "Create product"}
           />
-          <Button
-            type="text"
-            danger
-            icon={<DeleteOutlined />}
-            onClick={() => removeImage(idx)}
-            disabled={imageFields.length <= 1}
-          />
-        </Space>
-      ))}
-      <Button type="dashed" size="small" icon={<PlusOutlined />} onClick={() => appendImage("")}>
-        Add image
-      </Button>
-
-      <Divider orientation="left">Variants (optional)</Divider>
-      {variantFields.map((variant, idx) => (
-        <Fragment key={variant.id}>
-          <VariantItem
-            nestIndex={idx}
-            control={control}
-            errors={errors}
-            onRemove={() => removeVariant(idx)}
-          />
-        </Fragment>
-      ))}
-      <Button
-        type="dashed"
-        size="small"
-        icon={<PlusOutlined />}
-        onClick={() => appendVariant({ name: "", options: [{ name: "", isAvailable: true }] })}
+        }
       >
-        Add variant
-      </Button>
-
-      <Divider orientation="left">Specifications (optional)</Divider>
-      {specFields.map((spec, idx) => (
-        <Space key={spec.id} align="baseline" className="w-full">
-          <Controller
-            name={`specifications.${idx}.key` as const}
-            control={control}
-            render={({ field }) => (
-              <Form.Item
-                validateStatus={errors.specifications?.[idx]?.key ? "error" : ""}
-                help={errors.specifications?.[idx]?.key?.message}
-              >
-                <Input {...field} placeholder="brand" disabled={submitting} />
-              </Form.Item>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={step}
+            initial={reduceMotion ? false : { opacity: 0, x: 12 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={reduceMotion ? undefined : { opacity: 0, x: -12 }}
+            transition={{ duration: 0.18, ease: "easeOut" }}
+            className="space-y-6"
+          >
+            {step === 0 && (
+              <section className="space-y-4">
+                <Controller
+                  name="name"
+                  control={control}
+                  render={({ field }) => (
+                    <Form.Item label="Product name" validateStatus={errors.name ? "error" : ""} help={errors.name?.message}>
+                      <Input {...field} placeholder="Pro mechanical keyboard X1" disabled={submitting} />
+                    </Form.Item>
+                  )}
+                />
+                <Controller
+                  name="slug"
+                  control={control}
+                  render={({ field }) => (
+                    <Form.Item
+                      label="Slug"
+                      validateStatus={errors.slug ? "error" : ""}
+                      help={isEdit ? "Slug stays fixed so saved links keep working." : errors.slug?.message}
+                    >
+                      <Input {...field} placeholder="pro-mechanical-keyboard-x1" disabled />
+                    </Form.Item>
+                  )}
+                />
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <Controller
+                    name="categoryId"
+                    control={control}
+                    render={({ field }) => (
+                      <Form.Item label="Category" validateStatus={errors.categoryId ? "error" : ""} help={errors.categoryId?.message}>
+                        <Select
+                          value={field.value || undefined}
+                          onChange={field.onChange}
+                          onBlur={field.onBlur}
+                          showSearch={{ optionFilterProp: "label" }}
+                          placeholder="Select category"
+                          className="w-full"
+                          options={groupedOptions}
+                          disabled={submitting}
+                        />
+                      </Form.Item>
+                    )}
+                  />
+                  <Controller
+                    name="featured"
+                    control={control}
+                    render={({ field }) => (
+                      <Form.Item label="Placement">
+                        <div className="flex h-8 items-center gap-2">
+                          <Checkbox
+                            checked={!!field.value}
+                            onChange={(e) => field.onChange(e.target.checked)}
+                            disabled={submitting}
+                          >
+                            Show on homepage
+                          </Checkbox>
+                        </div>
+                      </Form.Item>
+                    )}
+                  />
+                </div>
+              </section>
             )}
-          />
-          <Controller
-            name={`specifications.${idx}.name` as const}
-            control={control}
-            render={({ field }) => (
-              <Form.Item
-                validateStatus={errors.specifications?.[idx]?.name ? "error" : ""}
-                help={errors.specifications?.[idx]?.name?.message}
-              >
-                <Input {...field} placeholder="ProGear" disabled={submitting} />
-              </Form.Item>
-            )}
-          />
-          <Button type="text" danger icon={<DeleteOutlined />} onClick={() => removeSpec(idx)} />
-        </Space>
-      ))}
-      <div>
-        <Button
-          type="dashed"
-          size="small"
-          icon={<PlusOutlined />}
-          onClick={() => appendSpec({ key: "", name: "" })}
-        >
-          Add specification
-        </Button>
-      </div>
 
-      <Form.Item className="mt-4">
-        <Button type="primary" htmlType="submit" loading={submitting} className="bg-zinc-900">
-          Save Product
-        </Button>
-      </Form.Item>
+            {step === 1 && (
+              <section className="space-y-6">
+                <Controller
+                  name="description"
+                  control={control}
+                  render={({ field }) => (
+                    <Form.Item label="Description" validateStatus={errors.description ? "error" : ""} help={errors.description?.message}>
+                      <Input.TextArea {...field} rows={4} placeholder="Switch type, layout, what is in the box" disabled={submitting} />
+                    </Form.Item>
+                  )}
+                />
+                <div>
+                  <p className="mb-2 text-sm font-medium text-[#1a2128]">Images</p>
+                  <div className="space-y-2">
+                    {imageFields.map((img, idx) => (
+                      <Space key={img.id} align="baseline" className="flex w-full">
+                        <Controller
+                          name={`images.${idx}` as const}
+                          control={control}
+                          render={({ field }) => (
+                            <Form.Item
+                              className="mb-0 flex-1"
+                              validateStatus={errors.images?.[idx] ? "error" : ""}
+                              help={(errors.images?.[idx] as { message?: string } | undefined)?.message}
+                            >
+                              <Input {...field} placeholder="https://…" disabled={submitting} />
+                            </Form.Item>
+                          )}
+                        />
+                        <Button type="text" danger icon={<DeleteOutlined />} onClick={() => removeImage(idx)} disabled={imageFields.length <= 1} aria-label={`Remove image ${idx + 1}`} />
+                      </Space>
+                    ))}
+                  </div>
+                  <Button type="dashed" size="small" icon={<PlusOutlined />} onClick={() => appendImage("")} className="mt-3">
+                    Add image
+                  </Button>
+                </div>
+                <div>
+                  <p className="mb-2 text-sm font-medium text-[#1a2128]">Specifications</p>
+                  {specFields.length === 0 && (
+                    <p className="mb-3 text-xs leading-relaxed text-[#5b6660]">
+                      No specs yet. Add rows like switch, connection, weight.
+                    </p>
+                  )}
+                  <div className="space-y-2">
+                    {specFields.map((spec, idx) => (
+                      <Space key={spec.id} align="baseline" className="flex w-full">
+                        <Controller
+                          name={`specifications.${idx}.key` as const}
+                          control={control}
+                          render={({ field }) => (
+                            <Form.Item
+                              className="mb-0 flex-1"
+                              validateStatus={errors.specifications?.[idx]?.key ? "error" : ""}
+                              help={errors.specifications?.[idx]?.key?.message}
+                            >
+                              <Input {...field} placeholder="switch" disabled={submitting} />
+                            </Form.Item>
+                          )}
+                        />
+                        <Controller
+                          name={`specifications.${idx}.name` as const}
+                          control={control}
+                          render={({ field }) => (
+                            <Form.Item
+                              className="mb-0 flex-1"
+                              validateStatus={errors.specifications?.[idx]?.name ? "error" : ""}
+                              help={errors.specifications?.[idx]?.name?.message}
+                            >
+                              <Input {...field} placeholder="Linear red" disabled={submitting} />
+                            </Form.Item>
+                          )}
+                        />
+                        <Button type="text" danger icon={<DeleteOutlined />} onClick={() => removeSpec(idx)} aria-label={`Remove spec ${idx + 1}`} />
+                      </Space>
+                    ))}
+                  </div>
+                  <Button type="dashed" size="small" icon={<PlusOutlined />} onClick={() => appendSpec({ key: "", name: "" })} className="mt-3">
+                    Add specification
+                  </Button>
+                </div>
+              </section>
+            )}
+
+            {step === 2 && (
+              <section className="space-y-6">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                  <Controller
+                    name="price"
+                    control={control}
+                    render={({ field }) => (
+                      <Form.Item label="Price" validateStatus={errors.price ? "error" : ""} help={errors.price?.message}>
+                        <InputNumber value={field.value} onChange={field.onChange} onBlur={field.onBlur} prefix="Rp" style={{ width: "100%" }} min={0} disabled={submitting} />
+                      </Form.Item>
+                    )}
+                  />
+                  <Controller
+                    name="discountPrice"
+                    control={control}
+                    render={({ field }) => (
+                      <Form.Item label="Discount price" validateStatus={errors.discountPrice ? "error" : ""} help={errors.discountPrice?.message}>
+                        <InputNumber value={field.value ?? undefined} onChange={field.onChange} onBlur={field.onBlur} prefix="Rp" style={{ width: "100%" }} min={0} disabled={submitting} />
+                      </Form.Item>
+                    )}
+                  />
+                  <Controller
+                    name="stock"
+                    control={control}
+                    render={({ field }) => (
+                      <Form.Item label="Stock" validateStatus={errors.stock ? "error" : ""} help={errors.stock?.message}>
+                        <InputNumber value={field.value} onChange={field.onChange} onBlur={field.onBlur} style={{ width: "100%" }} min={0} precision={0} disabled={submitting} />
+                      </Form.Item>
+                    )}
+                  />
+                </div>
+                <div>
+                  <p className="mb-2 text-sm font-medium text-[#1a2128]">Variants</p>
+                  {variantFields.length === 0 && (
+                    <p className="mb-3 text-xs leading-relaxed text-[#5b6660]">
+                      No variants yet. Most products ship without them.
+                    </p>
+                  )}
+                  <div className="space-y-3">
+                    {variantFields.map((variant, idx) => (
+                      <Fragment key={variant.id}>
+                        <VariantItem nestIndex={idx} control={control} errors={errors} onRemove={() => removeVariant(idx)} disabled={submitting} />
+                      </Fragment>
+                    ))}
+                  </div>
+                  <Button type="dashed" size="small" icon={<PlusOutlined />} onClick={() => appendVariant({ name: "", options: [{ name: "", isAvailable: true }] })} className="mt-3">
+                    Add variant
+                  </Button>
+                </div>
+              </section>
+            )}
+
+            {step === 3 && (
+              <section>
+                <p className="text-sm font-medium text-[#1a2128]">{review.name || "Untitled product"}</p>
+                <p className="mt-1 text-xs leading-relaxed text-[#5b6660]">
+                  Read this like a packing slip. Go back to fix a row, then save.
+                </p>
+                <dl className="mt-4 divide-y divide-[#d5dbd6] rounded-lg border border-[#d5dbd6] bg-white">
+                  {[
+                    ["Category", categoryName],
+                    ["Slug", review.slug || "—"],
+                    ["Price", `${formatPrice(Number(review.price) || 0)}${review.discountPrice ? `, now ${formatPrice(Number(review.discountPrice))}` : ""}`],
+                    ["Stock", `${Number(review.stock) || 0} units${review.featured ? ", on homepage" : ""}`],
+                    ["Images", `${imageCount} image${imageCount === 1 ? "" : "s"}`],
+                    ["Variants", variantCount === 0 ? "None" : (review.variants ?? []).map((v) => `${v.name} (${(v.options ?? []).length})`).join(", ")],
+                    ["Specs", specCount === 0 ? "None" : (review.specifications ?? []).map((s) => `${s.key}: ${s.name}`).join(", ")],
+                  ].map(([term, value]) => (
+                    <div key={term} className="grid grid-cols-3 gap-3 px-4 py-3">
+                      <dt className="text-xs text-[#5b6660]">{term}</dt>
+                      <dd className="col-span-2 break-words text-xs text-[#1a2128]">{value}</dd>
+                    </div>
+                  ))}
+                  <div className="grid grid-cols-3 gap-3 px-4 py-3">
+                    <dt className="text-xs text-[#5b6660]">Description</dt>
+                    <dd className="col-span-2 line-clamp-4 break-words text-xs leading-relaxed text-[#1a2128]">{review.description || "—"}</dd>
+                  </div>
+                </dl>
+              </section>
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </WizardFormLayout>
     </Form>
   );
 };

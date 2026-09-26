@@ -310,6 +310,15 @@ export const AdminProducts = () => {
     },
   ];
 
+  const wizardMode = editingSlug !== undefined ? "edit" : "create";
+  const wizardOpen = isCreateOpen || editingSlug !== undefined;
+
+  /** Closes the unified create/edit wizard. */
+  const closeWizard = () => {
+    setIsCreateOpen(false);
+    setEditingSlug(undefined);
+  };
+
   return (
     <div>
       <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center mb-6">
@@ -371,34 +380,22 @@ export const AdminProducts = () => {
       </div>
 
       <Modal
-        title="Add New Product"
-        open={isCreateOpen}
-        onCancel={() => setIsCreateOpen(false)}
+        title={wizardMode === "edit" ? `Edit ${editingSlug ?? ""}` : "Add New Product"}
+        open={wizardOpen}
+        onCancel={closeWizard}
         footer={null}
         destroyOnClose
-        width={720}
+        width={880}
       >
-        <AdminProductForm
-          categories={categories ?? []}
-          submitting={createMutation.isPending}
-          onSubmit={handleCreate}
-        />
-      </Modal>
-
-      <Modal
-        title={`Edit ${editingSlug ?? ""}`}
-        open={editingSlug !== undefined}
-        onCancel={() => setEditingSlug(undefined)}
-        footer={null}
-        destroyOnClose
-        width={720}
-      >
-        {editingSlug && (
+        {(!editingSlug || editDetail || wizardMode === "create") && (
           <AdminProductForm
-            initialData={editDetail}
+            mode={wizardMode}
+            initialData={editingSlug ? editDetail : null}
             categories={categories ?? []}
-            submitting={updateMutation.isPending}
-            onSubmit={handleUpdate}
+            submitting={
+              editingSlug ? updateMutation.isPending : createMutation.isPending
+            }
+            onSubmit={editingSlug ? handleUpdate : handleCreate}
           />
         )}
       </Modal>
