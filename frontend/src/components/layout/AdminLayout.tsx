@@ -19,7 +19,8 @@ export const AdminLayout = () => {
 
   const user = useAuthStore((s) => s.user);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
-  const admin = isAuthenticated && user?.role === "admin";
+  const admin =
+    isAuthenticated && (user?.role === "admin" || user?.role === "superadmin");
   useEffect(() => {
     if (!admin) {
       navigate("/");
@@ -68,7 +69,7 @@ export const AdminLayout = () => {
             {
               key: "/admin/users",
               icon: <UserOutlined />,
-              label: "Users",
+              label: <Link to="/admin/users">Users</Link>,
             },
             {
               type: "divider",

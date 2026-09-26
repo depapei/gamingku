@@ -20,6 +20,7 @@ import { Manual } from "./app/support/Manual";
 import { Contact } from "./app/support/Contact";
 import ScrollToTop from "./lib/ScrollToTop";
 import { AdminCategories } from "./app/admin/categories/AdminCategories";
+import { AdminUsers } from "./app/admin/users/AdminUsers";
 import { AuthLayout } from "./components/layout/AuthLayout";
 import { Login } from "./app/auth/login";
 import { Register } from "./app/auth/register";
@@ -75,6 +76,7 @@ export default function App() {
             <Route index element={<AdminDashboard />} />
             <Route path="products" element={<AdminProducts />} />
             <Route path="categories" element={<AdminCategories />} />
+            <Route path="users" element={<AdminUsers />} />
           </Route>
         </Routes>
       </BrowserRouter>
