@@ -28,10 +28,9 @@ export const RegisterForm = () => {
         const response: SuccessResponse = res;
         message.success(response.message);
         login(data, {
-          onSuccess: (res: any) => {
-            const response: SuccessResponse = res;
+          // Session is written to the in-memory store by authLogin's onSuccess.
+          onSuccess: () => {
             message.success(`Welcome, ${data.name}!`);
-            localStorage.setItem("user", JSON.stringify(response.token));
             navigate("/");
           },
           onError: (err: AxiosError) => {

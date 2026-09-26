@@ -9,8 +9,7 @@ import {
   LogoutOutlined,
 } from "@ant-design/icons";
 import { useEffect } from "react";
-import { jwtDecode } from "jwt-decode";
-import { Token } from "@/src/types/user";
+import { useAuthStore } from "@/src/store/authStore";
 
 const { Header, Sider, Content } = Layout;
 
@@ -18,10 +17,9 @@ export const AdminLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const user = localStorage.getItem("user");
-  const token = JSON.parse(user ? user : "");
-  const userInfo = token ? jwtDecode<Token>(token) : {};
-  const admin = userInfo ? userInfo.user_role === "admin" : false;
+  const user = useAuthStore((s) => s.user);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const admin = isAuthenticated && user?.role === "admin";
   useEffect(() => {
     if (!admin) {
       navigate("/");

@@ -40,6 +40,8 @@ func main() {
 		{
 			auth.POST("/login", PubAuthController.Login)
 			auth.POST("/register", PubAuthController.Register)
+			auth.POST("/refresh", PubAuthController.Refresh)
+			auth.POST("/logout", PubAuthController.Logout)
 		}
 		category := public.Group("/category")
 		{

@@ -21,23 +21,23 @@ export const LoginForm = () => {
 
   const onSubmit = (data: any) => {
     login(data, {
+      // Session is written to the in-memory store by authLogin's onSuccess.
       onSuccess: (res: any) => {
         const response: SuccessResponse = res;
-        localStorage.setItem("user", JSON.stringify(response.token));
         message.success(response.message);
         navigate("/");
       },
       onError: (err: AxiosError) => {
-        const response: ErrorResponse = err.response.data;
+        const response: ErrorResponse = (err.response as any)?.data ?? {};
         if (response.message === "Wrong password!") {
-          setError("password", { message: response.message });
+          setError("password", { message: response.message as string });
         } else if (response.message === "Email not found") {
-          setError("email", { message: response.message });
+          setError("email", { message: response.message as string });
         } else {
           // if (response.message typeof ErrorField){
 
           // }
-          message.error(response.message);
+          message.error(response.message as string);
         }
       },
     });

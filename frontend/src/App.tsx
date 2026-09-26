@@ -23,12 +23,32 @@ import { AdminCategories } from "./app/admin/categories/AdminCategories";
 import { AuthLayout } from "./components/layout/AuthLayout";
 import { Login } from "./app/auth/login";
 import { Register } from "./app/auth/register";
+import { useBootSession } from "./hooks/useAuth";
+
+/**
+ * Boot gate: rehydrates the session via the refresh cookie on app load.
+ * NOTE: placed in App.tsx (not main.tsx) so useBootSession runs inside
+ * the QueryClientProvider. Shows a splash only while the boot refresh is
+ * in flight; logged-out users render routes immediately after.
+ */
+function BootGate() {
+  const { isFetching } = useBootSession();
+  if (isFetching) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-sm text-zinc-500">
+        Loading...
+      </div>
+    );
+  }
+  return null;
+}
 
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <ScrollToTop />
+        <BootGate />
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<MainLayout />}>
