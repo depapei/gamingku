@@ -67,6 +67,32 @@ func StatusForCategoryError(err error) int {
 	}
 }
 
+// StatusForOrderError maps known order sentinel errors to HTTP codes.
+func StatusForOrderError(err error) int {
+	if err == nil {
+		return 200
+	}
+	lowered := strings.ToLower(err.Error())
+	switch {
+	case strings.Contains(lowered, "order not found"),
+		strings.Contains(lowered, "product not found"):
+		return 404
+	case strings.Contains(lowered, "already exists"),
+		strings.Contains(lowered, "duplicate key"),
+		strings.Contains(lowered, "duplicate entry"),
+		strings.Contains(lowered, "status conflict"):
+		return 409
+	case strings.Contains(lowered, "invalid"),
+		strings.Contains(lowered, "illegal transition"),
+		strings.Contains(lowered, "not found"),
+		strings.Contains(lowered, "does not match"),
+		strings.Contains(lowered, "are required"):
+		return 400
+	default:
+		return 500
+	}
+}
+
 // StatusForUserError maps known user sentinel errors to HTTP codes.
 func StatusForUserError(err error) int {
 	if err == nil {

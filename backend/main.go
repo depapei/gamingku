@@ -80,6 +80,9 @@ func main() {
 		order := admin.Group("/order")
 		{
 			order.GET("/", AdminOrderController.GetOrders)
+			order.GET("/:id", AdminOrderController.GetDetail)
+			order.PATCH("/:id/status", AdminOrderController.UpdateStatus)
+			order.DELETE("/:id", AdminOrderController.DeleteOrder)
 		}
 		user := admin.Group("/user")
 		{

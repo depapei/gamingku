@@ -2,94 +2,100 @@ package AdminOrderService
 
 import (
 	DataAccess "backend/db"
-	"backend/helper/type/order"
+	OrderDTO "backend/helper/type/order"
 	"backend/model"
-	"log"
-	"strconv"
+	"strings"
 )
 
-type Temp struct {
-	Order model.Order
-
-	Variants []model.VariantOptions
+// sortColumnAllowlist maps public sort keys to safe DB columns.
+var sortColumnAllowlist = map[string]string{
+	"createdAt":  "orders.created_at",
+	"created_at": "orders.created_at",
+	"totalPrice": "orders.total_price",
+	"customer":   "orders.customer",
+	"status":     "orders.status",
 }
 
-func GetOrders(search string, sortBy string, sort string, limit string) ([]order.RequestOrder, error) {
+// canonicalStatuses is the lifecycle set accepted by the status filter.
+var canonicalStatuses = map[string]bool{
+	"pending": true, "paid": true, "processing": true,
+	"completed": true, "cancelled": true, "refunded": true,
+}
+
+// GetOrders returns a paginated, filtered, safely-sorted admin order list.
+func GetOrders(params OrderDTO.OrderListParams) (OrderDTO.PaginatedOrderResponse, error) {
+	page := params.Page
+	if page <= 0 {
+		page = 1
+	}
+	limit := params.Limit
+	if limit <= 0 {
+		limit = 20
+	}
+	if limit > 50 {
+		return OrderDTO.PaginatedOrderResponse{}, ErrOrderInvalidInput
+	}
+	if params.DateFrom != nil && params.DateTo != nil && params.DateFrom.After(*params.DateTo) {
+		return OrderDTO.PaginatedOrderResponse{}, ErrOrderInvalidInput
+	}
+	if trimmed := strings.TrimSpace(params.Status); trimmed != "" {
+		if !canonicalStatuses[trimmed] {
+			return OrderDTO.PaginatedOrderResponse{}, ErrOrderInvalidInput
+		}
+	}
+
+	base := DataAccess.DB.Model(&model.Order{})
+	if trimmed := strings.TrimSpace(params.Search); trimmed != "" {
+		pattern := "%" + trimmed + "%"
+		base = base.Where("LOWER(customer) LIKE LOWER(?) OR LOWER(order_number) LIKE LOWER(?) OR LOWER(status) LIKE LOWER(?)", pattern, pattern, pattern)
+	}
+	if trimmed := strings.TrimSpace(params.Status); trimmed != "" {
+		base = base.Where("status = ?", trimmed)
+	}
+	if params.UserID != nil {
+		base = base.Where("user_id = ?", *params.UserID)
+	}
+	if params.DateFrom != nil {
+		base = base.Where("created_at >= ?", *params.DateFrom)
+	}
+	if params.DateTo != nil {
+		base = base.Where("created_at <= ?", *params.DateTo)
+	}
+
+	var total int64
+	if err := base.Count(&total).Error; err != nil {
+		return OrderDTO.PaginatedOrderResponse{}, err
+	}
+
+	column, ok := sortColumnAllowlist[params.SortBy]
+	if !ok {
+		column = "orders.created_at"
+	}
+	direction := "ASC"
+	if strings.EqualFold(params.Sort, "desc") {
+		direction = "DESC"
+	}
+
 	var orders []model.Order
-	var data []order.RequestOrder
-
-	raw := DataAccess.DB
-
-	raw = raw.
-		Preload("Items").
-		Preload("Items.Product").
-		Preload("Items.Product.Variants").
-		Preload("Items.Product.Variants.Options")
-
-	if len(search) > 0 {
-		s := "%" + search + "%"
-		raw = raw.Where("LOWER(customer) LIKE LOWER(?)", s)
-	}
-
-	if len(sortBy) > 0 {
-		var f string
-		if len(sort) > 0 {
-			f = sortBy + " " + sort
-			raw = raw.Order(f)
-		} else {
-			f = sortBy
-			raw = raw.Order(f + " asc")
-		}
-	}
-
-	if len(limit) > 0 {
-		intLimit, err := strconv.ParseInt(limit, 0, 64)
-		if err != nil {
-			return data, err
-		}
-		raw = raw.Limit(int(intLimit))
-	} else {
-		raw = raw.Limit(20)
-	}
-
-	err := raw.Find(&orders).Error
+	err := preloadOrderItems(base).
+		Order(column + " " + direction).
+		Limit(limit).
+		Offset((page - 1) * limit).
+		Find(&orders).Error
 	if err != nil {
-		log.Println(err.Error())
+		return OrderDTO.PaginatedOrderResponse{}, err
 	}
 
+	data := make([]OrderDTO.OrderResponse, 0, len(orders))
 	for _, o := range orders {
-		var oItems []order.OrderDetail
-		for _, i := range o.Items {
-			var choosedVariants []string
-			for _, ipv := range i.Product.Variants {
-				for _, ipvo := range ipv.Options {
-					for _, ivi := range i.VariantId {
-						if ivi == int64(ipvo.ID) {
-							choosedVariants = append(choosedVariants, ipvo.Name)
-						}
-					}
-				}
-			}
-
-			id := int(i.ID)
-			oItems = append(oItems, order.OrderDetail{
-				ID:          &id,
-				Quantity:    i.Quantity,
-				Price:       i.Price,
-				ProductName: i.Product.Name,
-				Variant:     choosedVariants,
-			})
-		}
-
-		id := int(o.ID)
-		data = append(data, order.RequestOrder{
-			ID:       &id,
-			Customer: o.Customer,
-			Address:  o.Address,
-			Email:    o.Email,
-			Items:    oItems,
-		})
+		o := o
+		data = append(data, toOrderResponse(o))
 	}
 
-	return data, err
+	return OrderDTO.PaginatedOrderResponse{
+		Data:  data,
+		Total: total,
+		Page:  page,
+		Limit: limit,
+	}, nil
 }
